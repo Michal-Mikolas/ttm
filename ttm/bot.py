@@ -1,4 +1,7 @@
-import ccxt
+from ccxt import Exchange
+from ttm.strategy.strategy import Strategy
+from datetime import datetime
+from dateutil.parser import parse
 
 """
 TTM - ToTheMoon crypto trading bot
@@ -7,18 +10,16 @@ TTM - ToTheMoon crypto trading bot
 """
 class Bot():
 
-	def __init__(self, exchange, strategy):
+	def __init__(self, exchange: Exchange, strategy: Strategy):
 		self.exchange = exchange
 		self.strategy = strategy
+		self.mode = 'backtest'  # backtest|real
+		self.cache = {}
 
-	def run_trading(self):
-		pass
-
-	def run_backtest(self, date_from, date_to, timeframe):
-		pass
-
-	def get_candles(self, pair, type, limit=100):
-		pass
+		# backtesting
+		self.now = datetime.now()
+		self.backtest_from = None
+		self.backtest_to = None
 
 	def buy(self, pair, amount):
 		pass
@@ -26,10 +27,79 @@ class Bot():
 	def sell(self, pair, amount):
 		pass
 
-	def get_wallet(self, pair):
+	def get_balance(self, pair):
 		pass
 
 	def storage(self, key, value):
 		pass
 
+	def get_ohlcvs(self, pair, type, from_datetime=None, till_datetime=None):
+		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
+		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else None
+
+		if self.mode == 'backtest':
+			# TODO Cache whole backtest period ...
+			cache_key = pair + '-' + type
+			if cache_key not in self.cache:
+				self.cache[cache_key] = self._download_ohlcvs(
+					pair,
+					type,
+					from_timestamp - self.strategy.backtest_history_need.get(cache_key, 0),
+					till_timestamp
+				)
+
+			# TODO ...and then load everything from cache
+
+		if self.mode == 'real':
+			ohlcvs = self._download_ohlcvs(pair, type, from_timestamp, till_timestamp)
+
+		return ohlcvs
+
+	def _download_ohlcvs(self, pair, type, from_timestamp=None, till_timestamp=None):
+		# TODO pagination: https://github.com/ccxt/ccxt/blob/master/examples/py/poloniex-fetch-ohlcv-with-pagination.py
+		ohlcvs = self.exchange.fetch_ohlcv(pair, type, from_timestamp, till_timestamp)
+
+		# fix for exchanges that returns more data then asked
+		ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp and x[0] <= till_timestamp]
+
+		return ohlcvs
+
+	#######
+	   #    #####    ##   #####  # #    #  ####
+	   #    #    #  #  #  #    # # ##   # #    #
+	   #    #    # #    # #    # # # #  # #
+	   #    #####  ###### #    # # #  # # #  ###
+	   #    #   #  #    # #    # # #   ## #    #
+	   #    #    # #    # #####  # #    #  ####
+
+	def run_real(self):
+		self.mode = 'real'
+
+	######
+	#     #   ##    ####  #    # ##### ######  ####  #####
+	#     #  #  #  #    # #   #    #   #      #        #
+	######  #    # #      ####     #   #####   ####    #
+	#     # ###### #      #  #     #   #           #   #
+	#     # #    # #    # #   #    #   #      #    #   #
+	######  #    #  ####  #    #   #   ######  ####    #
+
+	def run_backtest(self, date_from: str, date_to: str):
+		#
+		# 1) Init
+		#
+		self.mode = 'backtest'
+		self.backtest_from = parse(date_from)
+		self.backtest_to = parse(date_to)
+		self.now = self.backtest_from
+
+		#
+		# 2) Run simulation
+		#
+		tick = datetime.timedelta(seconds=self.strategy.tick_period)
+		while True:
+			self.strategy.tick()
+			self.now = self.now + tick
+
+			if self.now > self.backtest_to:
+				break
 
