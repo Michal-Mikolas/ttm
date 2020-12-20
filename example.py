@@ -10,4 +10,4 @@ exchange = ccxt.bittrex({
 strategy = ttm.strategy.SameValue()
 
 bot = ttm.Bot(exchange, strategy)
-bot.run_backtest('2019-03-01', '2019-04-01', '5m')
+bot.run_backtest('2019-03-01', '2019-04-01')
