@@ -7,7 +7,7 @@ class SameValue(Strategy):
 		super.__init__(self, bot)
 
 		# Config
-		self.tick_period = '60'
+		self.tick_period = 60  # seconds
 		self.pair = 'BTC/USD'
 		self.minimal_move = 5  # percent
 
