@@ -1,10 +1,10 @@
 import math
-from ttm.bot import Bot
+from ttm.strategy import Strategy
 
 class SameValue(Strategy):
 
-	def __init__(self, bot: Bot):
-		super.__init__(self, bot)
+	def __init__(self):
+		super().__init__()
 
 		# Config
 		self.tick_period = 60  # seconds
@@ -25,8 +25,8 @@ class SameValue(Strategy):
 				balance * move / 100
 			)
 
-		else if move <= -self.minimal_move:
-			self.bot.buy(
-				self.pair,
-				last_price * move / 100
-			)
+		# else if move <= -1*self.minimal_move:
+		# 	self.bot.buy(
+		# 		self.pair,
+		# 		last_price * move / 100
+		# 	)

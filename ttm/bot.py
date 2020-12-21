@@ -12,7 +12,10 @@ class Bot():
 
 	def __init__(self, exchange: Exchange, strategy: Strategy):
 		self.exchange = exchange
+
 		self.strategy = strategy
+		self.strategy.set_bot(self)
+
 		self.mode = 'backtest'  # backtest|real
 		self.cache = {}
 
@@ -44,11 +47,12 @@ class Bot():
 				self.cache[cache_key] = self._download_ohlcvs(
 					pair,
 					type,
-					from_timestamp - self.strategy.backtest_history_need.get(cache_key, 0),
-					till_timestamp
+					self._to_exchange_timestamp(self.backtest_from) - self.strategy.backtest_history_need.get(cache_key, 0) * 1000,  # exchange timestamp is in miliseconds
+					self._to_exchange_timestamp(self.backtest_to)
 				)
 
 			# TODO ...and then load everything from cache
+			ohlcvs = [x for x in self.cache[cache_key] if x[0] >= from_timestamp and x[0] <= till_timestamp]
 
 		if self.mode == 'real':
 			ohlcvs = self._download_ohlcvs(pair, type, from_timestamp, till_timestamp)
@@ -63,6 +67,19 @@ class Bot():
 		ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp and x[0] <= till_timestamp]
 
 		return ohlcvs
+
+	def _to_exchange_timestamp(self, date=None):
+		if type(date) is str:
+			return self.exchange.parse8601(date)
+
+		if type(date) is int:
+			return date
+
+		if type(date) is datetime:
+			return self.exchange.parse8601(date.isoformat())  # let ccxt handle timezone
+
+		return None
+
 
 	#######
 	   #    #####    ##   #####  # #    #  ####

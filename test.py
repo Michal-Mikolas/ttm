@@ -8,29 +8,38 @@ import ttm
 
 ############################################################
 
-# exchange = ccxt.bittrex()
-
-# string = '2019-01-01 00:00:00'
-# timestamp = exchange.parse8601(string)
-# print(timestamp)
-# print(datetime.timestamp(parse(string)))
+storage = ttm.storage.JSONFile('storage.txt')
+storage.save('a', 'AAA')
+storage.save('b', r'Žluťoučký kůň úpěl ďábelské ódy.')
+storage.save('c', 'CCC')
+print(storage.get('b'))
 
 ############################################################
 
 exchange = ccxt.bittrex()
+strategy = ttm.strategy.SameValue()
+bot = ttm.Bot(exchange, strategy)
 
-bot = ttm.Bot(exchange, None)
-ohlcvs = bot.get_ohlcvs('BTC/USD', '1h', '2019-01-01 09:00:00', '2019-01-01 10:10:00')
+string = '2019-01-01 00:00:00'
+print(exchange.parse8601(string))
+print(bot._to_exchange_timestamp(parse(string)))
 
-for ohlcv in ohlcvs:
-	print("%s: %d-%d-%d-%d" % (
-		exchange.iso8601(ohlcv[0]),
-		ohlcv[1],
-		ohlcv[2],
-		ohlcv[3],
-		ohlcv[4],
-	))
-print(exchange.milliseconds(), 'Fetched', len(ohlcvs), 'candles')
+############################################################
+
+# exchange = ccxt.bittrex()
+
+# bot = ttm.Bot(exchange, None)
+# ohlcvs = bot.get_ohlcvs('BTC/USD', '1h', '2019-01-01 09:00:00', '2019-01-01 10:10:00')
+
+# for ohlcv in ohlcvs:
+# 	print("%s: %d-%d-%d-%d" % (
+# 		exchange.iso8601(ohlcv[0]),
+# 		ohlcv[1],
+# 		ohlcv[2],
+# 		ohlcv[3],
+# 		ohlcv[4],
+# 	))
+# print(exchange.milliseconds(), 'Fetched', len(ohlcvs), 'candles')
 
 ############################################################
 

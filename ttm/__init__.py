@@ -1,2 +1,4 @@
-from ttm.bot import Bot
-from ttm.strategy.strategy import Strategy
+from .bot import Bot
+
+import ttm.storage
+import ttm.strategy
