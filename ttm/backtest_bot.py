@@ -12,14 +12,16 @@ TTM - ToTheMoon crypto trading bot
 """
 class BacktestBot(Bot):
 
-	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage):
+	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage,
+		date_from: str, date_to: str, initial_balances = {}
+	):
 		super().__init__(exchange, strategy, storage)
 
 		# backtesting
 		self.now = datetime.now()
-		self.backtest_from = None
-		self.backtest_to = None
-		self.backtest_balances = {}
+		self.backtest_from = parse(date_from)
+		self.backtest_to = parse(date_to)
+		self.backtest_balances = initial_balances
 
 	def buy(self, pair, amount):
 		# 1) Get pair price
@@ -38,7 +40,7 @@ class BacktestBot(Bot):
 
 	def get_ohlcvs(self, pair, type, from_datetime=None, till_datetime=None):
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
-		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else None
+		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.now)
 
 		# Cache whole backtest period ...
 		cache_key = pair + '-' + type
@@ -51,16 +53,16 @@ class BacktestBot(Bot):
 			)
 
 		# ...and then load everything from cache
-		ohlcvs = [x for x in self.cache[cache_key] if x[0] >= from_timestamp and x[0] <= till_timestamp]
+		ohlcvs = [x for x in self.cache[cache_key] if x[0] <= till_timestamp]
+		if from_timestamp:
+			ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp]
 
 		return ohlcvs
 
-	def run(self, date_from: str, date_to: str):
+	def run(self):
 		#
 		# 1) Init
 		#
-		self.backtest_from = parse(date_from)
-		self.backtest_to = parse(date_to)
 		self.now = self.backtest_from
 
 		#
