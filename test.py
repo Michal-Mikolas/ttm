@@ -8,17 +8,18 @@ import ttm
 
 ############################################################
 
-storage = ttm.storage.JSONFile('storage.txt')
-storage.save('a', 'AAA')
-storage.save('b', r'Žluťoučký kůň úpěl ďábelské ódy.')
-storage.save('c', 'CCC')
-print(storage.get('b'))
+# storage = ttm.storage.JSONFile('storage.txt')
+# storage.save('a', 'AAA')
+# storage.save('b', r'Žluťoučký kůň úpěl ďábelské ódy.')
+# storage.save('c', 'CCC')
+# print(storage.get('b'))
 
 ############################################################
 
 exchange = ccxt.bittrex()
 strategy = ttm.strategy.SameValue()
-bot = ttm.Bot(exchange, strategy)
+storage = ttm.storage.JSONFile('storage.txt')
+bot = ttm.BacktestBot(exchange, strategy, storage)
 
 string = '2019-01-01 00:00:00'
 print(exchange.parse8601(string))
@@ -27,8 +28,9 @@ print(bot._to_exchange_timestamp(parse(string)))
 ############################################################
 
 # exchange = ccxt.bittrex()
+# strategy = ttm.strategy.SameValue()
 
-# bot = ttm.Bot(exchange, None)
+# bot = ttm.BacktestBot(exchange, strategy)
 # ohlcvs = bot.get_ohlcvs('BTC/USD', '1h', '2019-01-01 09:00:00', '2019-01-01 10:10:00')
 
 # for ohlcv in ohlcvs:

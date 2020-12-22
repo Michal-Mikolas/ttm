@@ -7,7 +7,7 @@ exchange = ccxt.bittrex({
 	'secret': 'YOUR_API_SECRET',
 })
 strategy = ttm.strategy.SameValue()
-storage = ttm.storage.JSON('storage.json')
+storage = ttm.storage.JSONFile('storage.json')
 
-bot = ttm.Bot(exchange, strategy, storage)
-bot.run_backtest('2019-03-01', '2019-04-01')
+bot = ttm.BacktestBot(exchange, strategy, storage)
+bot.run('2019-03-01', '2019-04-01')
