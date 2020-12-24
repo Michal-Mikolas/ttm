@@ -72,16 +72,16 @@ class BacktestBot(Bot):
 
 		return self.backtest_balances[symbol]
 
-	def get_ohlcvs(self, pair, timefrime, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair: str, timeframe: str, from_datetime=None, till_datetime=None):
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
 		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.now)
 
 		# Cache whole backtest period ...
-		cache_key = pair + '-' + timefrime
+		cache_key = pair + '-' + timeframe
 		if cache_key not in self.cache:
 			self.cache[cache_key] = self._download_ohlcvs(
 				pair,
-				timefrime,
+				timeframe,
 				self._to_exchange_timestamp(self.backtest_from) - self.strategy.backtest_history_need.get(cache_key, 0) * 1000,  # exchange timestamp is in miliseconds
 				self._to_exchange_timestamp(self.backtest_to)
 			)
@@ -91,6 +91,8 @@ class BacktestBot(Bot):
 		if from_timestamp:
 			ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp]
 
+		# Finish
+		self.update_smallest_timeframe(timeframe)
 		return ohlcvs
 
 	def run(self):
@@ -104,7 +106,7 @@ class BacktestBot(Bot):
 		#
 		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
-			print(self.now.strftime('%Y-%m-%d %H:%M:%S')) ###
+			# print(self.now.strftime('%Y-%m-%d %H:%M:%S')) ###
 			self.strategy.tick()
 			self.now = self.now + tick
 
