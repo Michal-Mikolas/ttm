@@ -15,11 +15,12 @@ class SameValue(Strategy):
 		ohlcvs = self.bot.get_ohlcvs(self.pair, '5m')
 		ohlcv = ohlcvs[-1]
 
-		balance = self.bot.get_balance('BTC')
-		last_price = self.bot.storage.get('last_price')
+		last_price = self.get_last_price()
 		move = (ohlcv[4] - last_price) / last_price * 100  # percent
+		print('(%d - %d) / %d * 100 = %d' % (ohlcv[4], last_price, last_price, move)) ###
 
 		if move >= self.minimal_move:
+			balance = self.bot.get_balance('BTC')
 			self.bot.sell(
 				self.pair,
 				balance * move / 100
@@ -27,8 +28,18 @@ class SameValue(Strategy):
 			self.bot.storage.save('last_price', ohlcv[4])
 
 		elif move <= -1*self.minimal_move:
+			balance = self.bot.get_balance('BTC')
 			self.bot.buy(
 				self.pair,
 				last_price * move / 100
 			)
 			self.bot.storage.save('last_price', ohlcv[4])
+
+	def get_last_price(self):
+		last_price = self.bot.storage.get('last_price')
+
+		if not last_price:
+			last_price = self.bot.get_ohlcvs(self.pair, '5m')[-1][4]
+			self.bot.storage.save('last_price', last_price)
+
+		return last_price

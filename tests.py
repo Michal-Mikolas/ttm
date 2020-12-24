@@ -11,31 +11,35 @@ exchange = ccxt.bittrex({
 	# 'secret': '',
 })
 strategy = ttm.strategy.SameValue()
-storage = ttm.storage.JSONFile('storage.txt')
+storage = ttm.storage.JSONFile('storage.json')
 bot = ttm.BacktestBot(exchange, strategy, storage, '2019-01-01', '2019-04-01')
 
-############################################################
-
+#
+# Fee
+#
 fee = bot._calculate_fee('BTC/USD', 'limit', 'buy', 0.01, 10000)
 assert fee['cost'] == 0.25, "'Calculate fee' test failed"
 
-############################################################
-
+#
+# Storage
+#
 storage.save('a', 'AAA')
 storage.save('b', u'Žluťoučký kůň úpěl ďábelské ódy.')
 storage.save('c', 'CCC')
 assert storage.get('b') == u'Žluťoučký kůň úpěl ďábelské ódy.', "Storage unicode string test failed"
 assert storage.get('_nonexisting key') == None, "Storage 'None' test failed"
 
-############################################################
-
+#
+# Exchange timestamps
+#
 string = '2019-01-01 00:00:00'
 timestamp1 = exchange.parse8601(string)
 timestamp2 = bot._to_exchange_timestamp(parse(string))
 assert timestamp1 == timestamp2, "Datetime to timestamp conversion failed"
 
-############################################################
-
+#
+# Get OHLCVs
+#
 ohlcvs = bot.get_ohlcvs('BTC/USD', '1h', '2019-01-01 09:00:00', '2019-01-01 10:10:00')
 first = datetime.utcfromtimestamp(ohlcvs[0][0] / 1000)
 last = datetime.utcfromtimestamp(ohlcvs[-1][0] / 1000)
@@ -56,7 +60,6 @@ assert first.strftime('%Y-%m-%d') == '2019-01-01', "bot.get_ohlcvs() pagination 
 assert last.strftime('%Y-%m-%d') == '2019-03-31', "bot.get_ohlcvs() pagination test 2 failed"
 
 ############################################################
-
 # while True:
 # 	orderbook = exchange.fetch_order_book('BTC/EUR')
 # 	print(orderbook['bids'][0], orderbook['asks'][0])

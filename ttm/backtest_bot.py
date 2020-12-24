@@ -2,7 +2,7 @@ from ccxt import Exchange
 from ttm import Bot
 from ttm.strategy import Strategy
 from ttm.storage import Storage
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 """
@@ -46,13 +46,31 @@ class BacktestBot(Bot):
 		self.backtest_balances[currencies[1]] = balance2
 
 	def sell(self, pair: str, amount: float, log_values={}):
-		pass
+		# 1) Get pair price
+		ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
+		price = ohlcvs[-1][4]
 
-	def get_balance(self, pair):
-		if pair not in self.backtest_balances:
-			self.backtest_balances[pair] = 0.0
+		# 2) Calculate new balances
+		currencies = pair.split('/')
+		balance1 = self.get_balance(currencies[0])
+		balance2 = self.get_balance(currencies[1])
 
-		return self.backtest_balances[pair]
+		balance1 -= amount
+		balance2 += amount * price
+
+		# 3) Calculate fees
+		fee = self._calculate_fee(pair, 'limit', 'sell', amount, price)
+		balance2 -= fee['cost']
+
+		# 4) Save new balances
+		self.backtest_balances[currencies[0]] = balance1
+		self.backtest_balances[currencies[1]] = balance2
+
+	def get_balance(self, symbol):
+		if symbol not in self.backtest_balances:
+			self.backtest_balances[symbol] = 0.0
+
+		return self.backtest_balances[symbol]
 
 	def get_ohlcvs(self, pair, timefrime, from_datetime=None, till_datetime=None):
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
@@ -84,8 +102,9 @@ class BacktestBot(Bot):
 		#
 		# 2) Run simulation
 		#
-		tick = datetime.timedelta(seconds=self.strategy.tick_period)
+		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
+			print(self.now.strftime('%Y-%m-%d %H:%M:%S')) ###
 			self.strategy.tick()
 			self.now = self.now + tick
 
