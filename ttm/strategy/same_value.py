@@ -14,6 +14,10 @@ class SameValue(Strategy):
 
 		(self.currency1, self.currency2) = self.pair.split('/')
 
+	def start(self):
+		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
+		self.bot.log(datetime.utcfromtimestamp(ohlcv[0]/1000), ohlcv[4], 'Start', self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
+
 	def tick(self):
 		ohlcvs = self.bot.get_ohlcvs(self.pair, self.timeframe)
 		ohlcv = ohlcvs[-1]
@@ -48,3 +52,8 @@ class SameValue(Strategy):
 			self.bot.storage.save('last_price', last_price)
 
 		return last_price
+
+	def finish(self):
+		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
+		self.bot.log(datetime.utcfromtimestamp(ohlcv[0]/1000), ohlcv[4], 'Finish', self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
+

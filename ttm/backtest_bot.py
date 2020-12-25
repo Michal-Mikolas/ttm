@@ -105,6 +105,8 @@ class BacktestBot(Bot):
 		#
 		# 2) Run simulation
 		#
+		self.strategy.start()
+
 		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
 			# print(self.now.strftime('%Y-%m-%d %H:%M:%S')) ###
@@ -113,6 +115,8 @@ class BacktestBot(Bot):
 
 			if self.now > self.backtest_to:
 				break
+
+		self.strategy.finish()
 
 	def get_smallest_timeframe(self):
 		frames = {

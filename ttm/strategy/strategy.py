@@ -12,5 +12,11 @@ class Strategy(object):
 	def set_bot(self, bot):
 		self.bot = bot
 
+	def start(self):
+		pass
+
 	def tick(self):
+		pass
+
+	def finish(self):
 		pass
