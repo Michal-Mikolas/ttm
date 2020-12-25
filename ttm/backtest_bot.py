@@ -2,6 +2,7 @@ from ccxt import Exchange
 from ttm import Bot
 from ttm.strategy import Strategy
 from ttm.storage import Storage
+from ttm.logger import Logger
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 
@@ -12,10 +13,10 @@ TTM - ToTheMoon crypto trading bot
 """
 class BacktestBot(Bot):
 
-	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage,
+	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, logger: Logger,
 		date_from: str, date_to: str, initial_balances = {}
 	):
-		super().__init__(exchange, strategy, storage)
+		super().__init__(exchange, strategy, storage, logger)
 
 		# backtesting
 		self.now = datetime.now()
