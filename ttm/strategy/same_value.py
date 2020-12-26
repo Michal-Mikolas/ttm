@@ -63,12 +63,23 @@ class SameValue(Strategy):
 		self.bot.storage.save('target_value', target_value)
 
 	def log(self, message: str, ohlcv, balance1: float, balance2: float):
+		last_balance2 = self.bot.storage.get('last_balance2') or 0.0
+		balance2_change = balance2 - last_balance2
+
+		last_relative_balance2 = self.bot.storage.get('last_relative_balance2') or 0.0
+		relative_balance2 = last_relative_balance2 + balance2_change
+		relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
+
 		self.bot.log(
 			datetime.utcfromtimestamp(ohlcv[0]/1000),  # datetime
 			ohlcv[4],                                  # price
 			message,                                   # message
 			balance1,                                  # balance 1
 			balance2,                                  # balance 2
+			relative_balance2,                         # relative balance 2
 			balance1 * ohlcv[4],                       # value 1
 			balance1 * ohlcv[4] + balance2             # total value
 		)
+
+		self.bot.storage.save('last_balance2', balance2)
+		self.bot.storage.save('last_relative_balance2', relative_balance2)
