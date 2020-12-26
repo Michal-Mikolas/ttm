@@ -12,16 +12,17 @@ TTM - ToTheMoon crypto trading bot
 """
 class Bot():
 
-	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, logger: Logger):
+	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger):
 		self.exchange = exchange
 
 		self.strategy = strategy
 		self.strategy.set_bot(self)
 
 		self.storage = storage
+		self.cache = cache
 		self.logger = logger
 
-		self.cache = {}
+		self.temp = {}
 
 	def buy(self, pair, amount):
 		pass
@@ -32,7 +33,7 @@ class Bot():
 	def get_balance(self, pair):
 		pass
 
-	def get_ohlcvs(self, pair, timefrime, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair, timeframe, from_datetime=None, till_datetime=None):
 		pass
 
 	def run(self):
@@ -49,19 +50,32 @@ class Bot():
 	 #  #   ##   #   #      #   #  #   ## #    # #
 	### #    #   #   ###### #    # #    # #    # ######
 
-	def _download_ohlcvs(self, pair, timefrime, from_timestamp=None, till_timestamp=None):
-		duration = self.exchange.parse_timeframe(timefrime) * 1000
+	def _download_ohlcvs(self, pair, timeframe, from_timestamp: int = None, till_timestamp: int = None):
+		all_ohlcvs = None
 
-		all_ohlcvs = []
-		page_start_timestamp = from_timestamp
-		while page_start_timestamp < till_timestamp:
-			ohlcvs = self.exchange.fetch_ohlcv(pair, timefrime, page_start_timestamp, till_timestamp)
-			all_ohlcvs += ohlcvs
+		# Try to load from cache
+		cache_key = (pair + '-' + timeframe + '-' + str(from_timestamp) + '-' + str(till_timestamp)) if (from_timestamp and till_timestamp) else None
+		if cache_key:
+			all_ohlcvs = self.cache.get(cache_key)
 
-			page_start_timestamp = all_ohlcvs[-1][0] + duration
+		# Download from the server for the first time
+		if not all_ohlcvs:
+			ohlcv_duration = self.exchange.parse_timeframe(timeframe) * 1000
 
-		# fix for exchanges that returns more data then asked
-		all_ohlcvs = [x for x in all_ohlcvs if x[0] >= from_timestamp and x[0] <= till_timestamp]
+			all_ohlcvs = []
+			page_start_timestamp = from_timestamp
+			while page_start_timestamp < till_timestamp:
+				ohlcvs = self.exchange.fetch_ohlcv(pair, timeframe, page_start_timestamp, till_timestamp)
+				all_ohlcvs += ohlcvs
+
+				page_start_timestamp = all_ohlcvs[-1][0] + ohlcv_duration
+
+			# fix for exchanges that returns more data then asked
+			all_ohlcvs = [x for x in all_ohlcvs if x[0] >= from_timestamp and x[0] <= till_timestamp]
+
+			# Save results to cache if possible
+			if cache_key:
+				self.cache.save(cache_key, all_ohlcvs)
 
 		return all_ohlcvs
 

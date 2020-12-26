@@ -13,10 +13,10 @@ TTM - ToTheMoon crypto trading bot
 """
 class BacktestBot(Bot):
 
-	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, logger: Logger,
+	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger,
 		date_from: str, date_to: str, initial_balances = {}
 	):
-		super().__init__(exchange, strategy, storage, logger)
+		super().__init__(exchange, strategy, storage, cache, logger)
 
 		# backtesting
 		self.now = datetime.now()
@@ -25,7 +25,7 @@ class BacktestBot(Bot):
 		self.backtest_balances = initial_balances
 		self.smallest_timeframe = None
 
-	def buy(self, pair: str, amount: float, log_values = {}):
+	def buy(self, pair: str, amount: float):
 		# 1) Get pair price
 		ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
 		price = ohlcvs[-1][4]
@@ -46,7 +46,7 @@ class BacktestBot(Bot):
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
-	def sell(self, pair: str, amount: float, log_values={}):
+	def sell(self, pair: str, amount: float):
 		# 1) Get pair price
 		ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
 		price = ohlcvs[-1][4]
@@ -77,18 +77,18 @@ class BacktestBot(Bot):
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
 		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.now)
 
-		# Cache whole backtest period ...
-		cache_key = pair + '-' + timeframe
-		if cache_key not in self.cache:
-			self.cache[cache_key] = self._download_ohlcvs(
+		# Save whole backtest period ...
+		temp_key = pair + '-' + timeframe
+		if temp_key not in self.temp:
+			self.temp[temp_key] = self._download_ohlcvs(
 				pair,
 				timeframe,
-				self._to_exchange_timestamp(self.backtest_from) - self.strategy.backtest_history_need.get(cache_key, 0) * 1000,  # exchange timestamp is in miliseconds
+				self._to_exchange_timestamp(self.backtest_from) - self.strategy.backtest_history_need.get(temp_key, 0) * 1000,  # exchange timestamp is in miliseconds
 				self._to_exchange_timestamp(self.backtest_to)
 			)
 
-		# ...and then load everything from cache
-		ohlcvs = [x for x in self.cache[cache_key] if x[0] <= till_timestamp]
+		# ...and then load everything from temp
+		ohlcvs = [x for x in self.temp[temp_key] if x[0] <= till_timestamp]
 		if from_timestamp:
 			ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp]
 
