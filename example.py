@@ -1,12 +1,14 @@
+import os
 import ccxt
 import ttm
 
 #
 # Clean from last run
 #
-with open('storage.json', 'w') as file:
-	pass
-with open('log.csv', 'w') as file:
+try:
+	os.remove('storage.json')
+	os.remove('log.csv')
+except:
 	pass
 
 #
@@ -15,9 +17,12 @@ with open('log.csv', 'w') as file:
 exchange = ccxt.bittrex()
 strategy = ttm.strategy.SameValue(
 	pair='BTC/USD',
-	minimal_move=5,
+	initial_target_value=100,  # USD
+	minimal_move=5.0,          # percent
 	tick_period=60*60,
-	timeframe='1h'
+	timeframe='1h',
+	sell_modifier=1.00,
+	buy_modifier=1.00,
 )
 storage = ttm.storage.JSONFile('storage.json')
 logger = ttm.logger.CSVFile('log.csv', print_to_console=True)
@@ -28,7 +33,7 @@ logger = ttm.logger.CSVFile('log.csv', print_to_console=True)
 # 10k-_-10k: '2019-09-26', '2020-07-27'
 bot = ttm.BacktestBot(exchange, strategy, storage, logger, '2019-09-26', '2020-07-27', {
 	'BTC': 0.01,
-	'USD': 100,
+	'USD': 0.0,
 })
 
 #

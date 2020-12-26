@@ -19,18 +19,18 @@ class Console(Logger):
 	def format_value(self, value, fixed_size=False):
 		if fixed_size:
 			if type(value) is str:
-				value = "{:36s}".format(value)
+				value = "{:24s}".format(value)
 
 			if type(value) is datetime:
-				value = "{:22s}".format(value.strftime('%Y-%m-%d %H:%M:%S'))
+				value = "{:20s}".format(value.strftime('%Y-%m-%d %H:%M:%S'))
 
 			if type(value) is int:
-				value = "{:8d}".format(value)
-				value = value.rjust(8) + '  '
+				value = "{:6d}".format(value)
+				value = value.rjust(6) + '  '
 
 			if type(value) is float:
-				value = "{:6.8f}".format(value)
-				value = value.rjust(15) + '  '
+				value = "{:5.6f}".format(value)
+				value = value.rjust(13) + '  '
 
 		else:
 			value = super().format_value(value)
