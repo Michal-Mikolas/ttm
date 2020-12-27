@@ -59,7 +59,7 @@ class SameValue(Strategy):
 		))
 
 		print('')
-		print('# USD balance')
+		print('# Cash balance')
 		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
 			self.bot.statistics.data['balance2'][0],
 			self.bot.statistics.get_max('balance2'),
@@ -78,11 +78,41 @@ class SameValue(Strategy):
 			self.bot.statistics.get_min('relative_balance2'),
 			self.bot.statistics.get_max('relative_balance2'),
 		))
-		print('• P10-P20-P30-P50: {:4.0f} | {:4.0f} | {:4.0f}'.format(
+		print('• P10-P20-P30-P50: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
 			self.bot.statistics.get_percentil('relative_balance2', 10),
 			self.bot.statistics.get_percentil('relative_balance2', 20),
 			self.bot.statistics.get_percentil('relative_balance2', 30),
 			self.bot.statistics.get_percentil('relative_balance2', 50),
+			self.bot.statistics.get_percentil('relative_balance2', 70),
+		))
+
+		print('')
+		print('# Crypto value')
+		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.data['value'][0],
+			self.bot.statistics.get_max('value'),
+			self.bot.statistics.get_min('value'),
+			self.bot.statistics.data['value'][-1],
+		))
+
+		print('')
+		print('# Total value')
+		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.data['total_value'][0],
+			self.bot.statistics.get_max('total_value'),
+			self.bot.statistics.get_min('total_value'),
+			self.bot.statistics.data['total_value'][-1],
+		))
+
+		print('')
+		print('# Profit')
+		print('• Cash balance: {:6.2f} / month | {:6.2f} / year'.format(
+			self.bot.statistics.data['balance2'][-1] / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 31,
+			self.bot.statistics.data['balance2'][-1] / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 365,
+		))
+		print('• Total value: {:6.2f} / month | {:6.2f} / year'.format(
+			(self.bot.statistics.data['total_value'][-1] - self.bot.statistics.data['total_value'][0]) / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 31,
+			(self.bot.statistics.data['total_value'][-1] - self.bot.statistics.data['total_value'][0]) / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 365,
 		))
 
 	################################################################################
@@ -118,6 +148,7 @@ class SameValue(Strategy):
 			balance1 * ohlcv[4] + balance2             # total value
 		)
 
+		self.bot.statistics.add('date', datetime.utcfromtimestamp(ohlcv[0]/1000))
 		self.bot.statistics.add('price', ohlcv[4])
 		self.bot.statistics.add('balance1', balance1)
 		self.bot.statistics.add('balance2', balance2)
