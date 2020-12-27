@@ -48,6 +48,43 @@ class SameValue(Strategy):
 		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
 		self.log('Finish', ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
 
+		# Print statistics
+		print('')
+		print('# Price')
+		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.data['price'][0],
+			self.bot.statistics.get_max('price'),
+			self.bot.statistics.get_min('price'),
+			self.bot.statistics.data['price'][-1],
+		))
+
+		print('')
+		print('# USD balance')
+		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.data['balance2'][0],
+			self.bot.statistics.get_max('balance2'),
+			self.bot.statistics.get_min('balance2'),
+			self.bot.statistics.data['balance2'][-1],
+		))
+		print('• P20-P50-P80: {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.get_percentil('balance2', 20),
+			self.bot.statistics.get_percentil('balance2', 50),
+			self.bot.statistics.get_percentil('balance2', 80),
+		))
+
+		print('')
+		print('# Risk balance')
+		print('• min-max: {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.get_min('relative_balance2'),
+			self.bot.statistics.get_max('relative_balance2'),
+		))
+		print('• P10-P20-P30-P50: {:4.0f} | {:4.0f} | {:4.0f}'.format(
+			self.bot.statistics.get_percentil('relative_balance2', 10),
+			self.bot.statistics.get_percentil('relative_balance2', 20),
+			self.bot.statistics.get_percentil('relative_balance2', 30),
+			self.bot.statistics.get_percentil('relative_balance2', 50),
+		))
+
 	################################################################################
 
 	def get_target_value(self):
@@ -80,6 +117,13 @@ class SameValue(Strategy):
 			balance1 * ohlcv[4],                       # value 1
 			balance1 * ohlcv[4] + balance2             # total value
 		)
+
+		self.bot.statistics.add('price', ohlcv[4])
+		self.bot.statistics.add('balance1', balance1)
+		self.bot.statistics.add('balance2', balance2)
+		self.bot.statistics.add('relative_balance2', relative_balance2)
+		self.bot.statistics.add('value', balance1 * ohlcv[4])
+		self.bot.statistics.add('total_value', balance1 * ohlcv[4] + balance2)
 
 		self.bot.storage.save('last_balance2', balance2)
 		self.bot.storage.save('last_relative_balance2', relative_balance2)

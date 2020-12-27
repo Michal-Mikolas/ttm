@@ -28,12 +28,9 @@ storage = ttm.storage.JSONFile('storage.json')  # storage used mainly for strate
 cache = ttm.storage.JSONFile('cache.json')      # storage used only for Bot class
 logger = ttm.logger.CSVFile('log.csv', print_to_console=True)
 
-# 19k-_4k: '2017-12-17', '2018-12-16'
-# 11k-_4k: '2019-08-12', '2020-03-13'
-# 10k-_4k: '2019-07-27', '2020-03-13'
-# 10k-_-10k: '2019-09-26', '2020-07-27'
+# 7.5k-7.5k: '2018-06-01', '2020-04-24'
 # max range: '2018-06-01', '2020-12-26'
-bot = ttm.BacktestBot(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-12-26', {
+bot = ttm.BacktestBot(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
 	'BTC': 0.013227,
 	'USD': 0.0,
 })
