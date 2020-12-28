@@ -1,6 +1,13 @@
 import json
 from ttm.storage import Storage
 
+"""
+(This file is part of TTM package)
+
+TTM - ToTheMoon crypto trading bot
+
+@author  Michal Mikolas (nanuqcz@gmail.com)
+"""
 class JSONFile(Storage):
 
 	def __init__(self, file):

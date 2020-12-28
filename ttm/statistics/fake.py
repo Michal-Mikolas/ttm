@@ -1,5 +1,12 @@
 from ttm.statistics import Statistics
 
+"""
+(This file is part of TTM package)
+
+TTM - ToTheMoon crypto trading bot
+
+@author  Michal Mikolas (nanuqcz@gmail.com)
+"""
 class Fake(Statistics):
 
 	def add(self, key, value):

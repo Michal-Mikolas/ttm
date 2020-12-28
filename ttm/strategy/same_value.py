@@ -1,6 +1,13 @@
 from datetime import datetime
 from ttm.strategy import Strategy
 
+"""
+(This file is part of TTM package)
+
+TTM - ToTheMoon crypto trading bot
+
+@author  Michal Mikolas (nanuqcz@gmail.com)
+"""
 class SameValue(Strategy):
 
 	def __init__(self, pair: str, initial_target_value: float, minimal_move=5.0, tick_period=60, timeframe='1m', sell_modifier=1.00, buy_modifier=1.00):
@@ -48,7 +55,53 @@ class SameValue(Strategy):
 		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
 		self.log('Finish', ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
 
-		# Print statistics
+		self.print_statistics()
+
+	################################################################################
+
+	def get_target_value(self):
+		target_value = self.bot.storage.get('target_value')
+
+		if not target_value:
+			target_value = self.initial_target_value
+			self.bot.storage.save('target_value', target_value)
+
+		return target_value
+
+	def save_target_value(self, target_value):
+		self.bot.storage.save('target_value', target_value)
+
+	def log(self, message: str, ohlcv, balance1: float, balance2: float):
+		last_balance2 = self.bot.storage.get('last_balance2') or 0.0
+		balance2_change = balance2 - last_balance2
+
+		last_relative_balance2 = self.bot.storage.get('last_relative_balance2') or 0.0
+		relative_balance2 = last_relative_balance2 + balance2_change
+		relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
+
+		self.bot.log(
+			datetime.utcfromtimestamp(ohlcv[0]/1000),  # datetime
+			ohlcv[4],                                  # price
+			message,                                   # message
+			balance1,                                  # balance 1
+			balance2,                                  # balance 2
+			relative_balance2,                         # relative balance 2
+			balance1 * ohlcv[4],                       # value 1
+			balance1 * ohlcv[4] + balance2             # total value
+		)
+
+		self.bot.statistics.add('date', datetime.utcfromtimestamp(ohlcv[0]/1000))
+		self.bot.statistics.add('price', ohlcv[4])
+		self.bot.statistics.add('balance1', balance1)
+		self.bot.statistics.add('balance2', balance2)
+		self.bot.statistics.add('relative_balance2', relative_balance2)
+		self.bot.statistics.add('value', balance1 * ohlcv[4])
+		self.bot.statistics.add('total_value', balance1 * ohlcv[4] + balance2)
+
+		self.bot.storage.save('last_balance2', balance2)
+		self.bot.storage.save('last_relative_balance2', relative_balance2)
+
+	def print_statistics(self):
 		stats = self.bot.statistics
 
 		print('')
@@ -128,47 +181,3 @@ class SameValue(Strategy):
 			# total_value_profit / total_cache_invested / days_count * 365 * 100
 			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365 * 100,
 		))
-
-	################################################################################
-
-	def get_target_value(self):
-		target_value = self.bot.storage.get('target_value')
-
-		if not target_value:
-			target_value = self.initial_target_value
-			self.bot.storage.save('target_value', target_value)
-
-		return target_value
-
-	def save_target_value(self, target_value):
-		self.bot.storage.save('target_value', target_value)
-
-	def log(self, message: str, ohlcv, balance1: float, balance2: float):
-		last_balance2 = self.bot.storage.get('last_balance2') or 0.0
-		balance2_change = balance2 - last_balance2
-
-		last_relative_balance2 = self.bot.storage.get('last_relative_balance2') or 0.0
-		relative_balance2 = last_relative_balance2 + balance2_change
-		relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
-
-		self.bot.log(
-			datetime.utcfromtimestamp(ohlcv[0]/1000),  # datetime
-			ohlcv[4],                                  # price
-			message,                                   # message
-			balance1,                                  # balance 1
-			balance2,                                  # balance 2
-			relative_balance2,                         # relative balance 2
-			balance1 * ohlcv[4],                       # value 1
-			balance1 * ohlcv[4] + balance2             # total value
-		)
-
-		self.bot.statistics.add('date', datetime.utcfromtimestamp(ohlcv[0]/1000))
-		self.bot.statistics.add('price', ohlcv[4])
-		self.bot.statistics.add('balance1', balance1)
-		self.bot.statistics.add('balance2', balance2)
-		self.bot.statistics.add('relative_balance2', relative_balance2)
-		self.bot.statistics.add('value', balance1 * ohlcv[4])
-		self.bot.statistics.add('total_value', balance1 * ohlcv[4] + balance2)
-
-		self.bot.storage.save('last_balance2', balance2)
-		self.bot.storage.save('last_relative_balance2', relative_balance2)

@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 """
+(This file is part of TTM package)
+
 TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)

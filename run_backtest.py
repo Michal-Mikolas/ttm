@@ -29,13 +29,13 @@ cache = ttm.storage.JSONFile('cache.json')               # storage used only for
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
 	ttm.logger.CSVFile('backtest-log.csv'),
-	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),
+	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),
 )
 
 # max range:  '2018-06-01', '2020-12-26'
 # 7.5k-7.5k:  '2018-06-01', '2020-04-24'
 # 7.5k-24.5k: '2020-04-24', '2020-12-26'
-bot = ttm.BacktestBot(exchange, strategy, storage, cache, logger, '2018-06-01', '2018-07-01', {
+bot = ttm.BacktestBot(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
 	'BTC': 0.013227,
 	'USD': 0.0,
 })

@@ -1,5 +1,12 @@
 from ttm.logger import Logger
 
+"""
+(This file is part of TTM package)
+
+TTM - ToTheMoon crypto trading bot
+
+@author  Michal Mikolas (nanuqcz@gmail.com)
+"""
 class Multi(Logger):
 
 	def __init__(self, *args):

@@ -1,6 +1,13 @@
 from ttm.logger import Logger
 import csv
 
+"""
+(This file is part of TTM package)
+
+TTM - ToTheMoon crypto trading bot
+
+@author  Michal Mikolas (nanuqcz@gmail.com)
+"""
 class CSVFile(Logger):
 
 	def __init__(self, file: str):
