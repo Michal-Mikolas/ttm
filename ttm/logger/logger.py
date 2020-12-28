@@ -11,7 +11,5 @@ class Logger():
 	def format_value(self, value):
 		if type(value) is datetime:
 			return value.strftime('%Y-%m-%d %H:%M:%S')
-		if type(value) == datetime:
-			return value.strftime('%Y-%m-%d %H:%M:%S')
 
 		return value

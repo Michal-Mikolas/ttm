@@ -49,70 +49,84 @@ class SameValue(Strategy):
 		self.log('Finish', ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
 
 		# Print statistics
+		stats = self.bot.statistics
+
 		print('')
 		print('# Price')
 		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.data['price'][0],
-			self.bot.statistics.get_max('price'),
-			self.bot.statistics.get_min('price'),
-			self.bot.statistics.data['price'][-1],
+			stats.data['price'][0],
+			stats.get_max('price'),
+			stats.get_min('price'),
+			stats.data['price'][-1],
 		))
 
 		print('')
 		print('# Cash balance')
 		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.data['balance2'][0],
-			self.bot.statistics.get_max('balance2'),
-			self.bot.statistics.get_min('balance2'),
-			self.bot.statistics.data['balance2'][-1],
+			stats.data['balance2'][0],
+			stats.get_max('balance2'),
+			stats.get_min('balance2'),
+			stats.data['balance2'][-1],
 		))
 		print('• P20-P50-P80: {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.get_percentil('balance2', 20),
-			self.bot.statistics.get_percentil('balance2', 50),
-			self.bot.statistics.get_percentil('balance2', 80),
+			stats.get_percentil('balance2', 20),
+			stats.get_percentil('balance2', 50),
+			stats.get_percentil('balance2', 80),
 		))
 
 		print('')
 		print('# Risk balance')
 		print('• min-max: {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.get_min('relative_balance2'),
-			self.bot.statistics.get_max('relative_balance2'),
+			stats.get_min('relative_balance2'),
+			stats.get_max('relative_balance2'),
 		))
 		print('• P10-P20-P30-P50: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.get_percentil('relative_balance2', 10),
-			self.bot.statistics.get_percentil('relative_balance2', 20),
-			self.bot.statistics.get_percentil('relative_balance2', 30),
-			self.bot.statistics.get_percentil('relative_balance2', 50),
-			self.bot.statistics.get_percentil('relative_balance2', 70),
+			stats.get_percentil('relative_balance2', 10),
+			stats.get_percentil('relative_balance2', 20),
+			stats.get_percentil('relative_balance2', 30),
+			stats.get_percentil('relative_balance2', 50),
+			stats.get_percentil('relative_balance2', 70),
 		))
 
 		print('')
 		print('# Crypto value')
 		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.data['value'][0],
-			self.bot.statistics.get_max('value'),
-			self.bot.statistics.get_min('value'),
-			self.bot.statistics.data['value'][-1],
+			stats.data['value'][0],
+			stats.get_max('value'),
+			stats.get_min('value'),
+			stats.data['value'][-1],
 		))
 
 		print('')
 		print('# Total value')
 		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			self.bot.statistics.data['total_value'][0],
-			self.bot.statistics.get_max('total_value'),
-			self.bot.statistics.get_min('total_value'),
-			self.bot.statistics.data['total_value'][-1],
+			stats.data['total_value'][0],
+			stats.get_max('total_value'),
+			stats.get_min('total_value'),
+			stats.data['total_value'][-1],
 		))
 
 		print('')
 		print('# Profit')
 		print('• Cash balance: {:6.2f} / month | {:6.2f} / year'.format(
-			self.bot.statistics.data['balance2'][-1] / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 31,
-			self.bot.statistics.data['balance2'][-1] / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 365,
+			stats.data['balance2'][-1] / (stats.data['date'][-1] - stats.data['date'][0]).days * 31,
+			stats.data['balance2'][-1] / (stats.data['date'][-1] - stats.data['date'][0]).days * 365,
 		))
 		print('• Total value: {:6.2f} / month | {:6.2f} / year'.format(
-			(self.bot.statistics.data['total_value'][-1] - self.bot.statistics.data['total_value'][0]) / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 31,
-			(self.bot.statistics.data['total_value'][-1] - self.bot.statistics.data['total_value'][0]) / (self.bot.statistics.data['date'][-1] - self.bot.statistics.data['date'][0]).days * 365,
+			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31,
+			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365,
+		))
+		print('• Cash relative: {:6.2f} % / month | {:6.2f} % / year'.format(
+			# profit / total_cache_invested / days_count * 31 * 100
+			(stats.data['balance2'][-1] - stats.data['balance2'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31 * 100,
+			# profit / total_cache_invested / days_count * 365 * 100
+			(stats.data['balance2'][-1] - stats.data['balance2'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365 * 100,
+		))
+		print('• Total relative: {:6.2f} % / month | {:6.2f} % / year'.format(
+			# total_value_profit / total_cache_invested / days_count * 31 * 100
+			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31 * 100,
+			# total_value_profit / total_cache_invested / days_count * 365 * 100
+			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365 * 100,
 		))
 
 	################################################################################
