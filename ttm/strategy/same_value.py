@@ -38,7 +38,7 @@ class SameValue(Strategy):
 		if move >= self.minimal_move:
 			sell_amount = (balance - target_balance) * self.sell_modifier
 
-			self.bot.sell(self.pair, sell_amount)
+			self.bot.sell(self.pair, sell_amount, ohlcv[4])
 			self.save_target_value((balance - sell_amount) * ohlcv[4])
 
 			self.log('Sold %f %s.' % (sell_amount, self.currency1), ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
@@ -46,7 +46,7 @@ class SameValue(Strategy):
 		elif move <= -1*self.minimal_move:
 			buy_amount = (target_balance - balance) * self.buy_modifier
 
-			self.bot.buy(self.pair, buy_amount)
+			self.bot.buy(self.pair, buy_amount, ohlcv[4])
 			self.save_target_value((balance + buy_amount) * ohlcv[4])
 
 			self.log('Bought %f %s.' % (buy_amount, self.currency1), ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
