@@ -1,5 +1,5 @@
 from ccxt import Exchange
-from ttm import Bot
+from ttm.bot import Bot
 from ttm.strategy import Strategy
 from ttm.storage import Storage
 from ttm.logger import Logger
@@ -14,7 +14,7 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
-class BacktestBot(Bot):
+class Backtest(Bot):
 
 	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger,
 		date_from: str, date_to: str, initial_balances = {}
@@ -30,10 +30,11 @@ class BacktestBot(Bot):
 
 		self.statistics = RealStatistics()  # for backtesting, turn on statistics module
 
-	def buy(self, pair: str, amount: float):
+	def buy(self, pair: str, amount: float, price: float = None):
 		# 1) Get pair price
-		ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-		price = ohlcvs[-1][4]
+		if not price:
+			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
+			price = ohlcvs[-1][4]
 
 		# 2) Calculate new balances
 		currencies = pair.split('/')
@@ -51,10 +52,11 @@ class BacktestBot(Bot):
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
-	def sell(self, pair: str, amount: float):
+	def sell(self, pair: str, amount: float, price: float = None):
 		# 1) Get pair price
-		ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-		price = ohlcvs[-1][4]
+		if not price:
+			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
+			price = ohlcvs[-1][4]
 
 		# 2) Calculate new balances
 		currencies = pair.split('/')
@@ -114,13 +116,13 @@ class BacktestBot(Bot):
 
 		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
-			# print(self.now.strftime('%Y-%m-%d %H:%M:%S')) ###
 			self.strategy.tick()
 			self.now = self.now + tick
 
 			if self.now > self.backtest_to:
 				break
 
+	def __del__(self):
 		self.strategy.finish()
 
 	def get_smallest_timeframe(self):

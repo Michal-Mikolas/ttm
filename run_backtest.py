@@ -14,7 +14,7 @@ except:
 #
 # Init
 #
-exchange = ccxt.bittrex()
+exchange = ccxt.bittrex({'enableRateLimit': True})
 strategy = ttm.strategy.SameValue(
 	pair='BTC/USD',
 	initial_target_value=100,  # USD
@@ -35,7 +35,7 @@ logger = ttm.logger.Multi(
 # max range:  '2018-06-01', '2020-12-26'
 # 7.5k-7.5k:  '2018-06-01', '2020-04-24'
 # 7.5k-24.5k: '2020-04-24', '2020-12-26'
-bot = ttm.BacktestBot(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
+bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
 	'BTC': 0.013227,
 	'USD': 0.0,
 })

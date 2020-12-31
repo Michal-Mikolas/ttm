@@ -30,13 +30,13 @@ class Bot():
 
 		self.statistics = FakeStatistics()  # in real run, statistics are disabled because of performance
 
-	def buy(self, pair, amount):
+	def buy(self, pair, amount, price: float = None):
 		pass
 
-	def sell(self, pair, amount):
+	def sell(self, pair, amount, price: float = None):
 		pass
 
-	def get_balance(self, pair):
+	def get_balance(self, symbol):
 		pass
 
 	def get_ohlcvs(self, pair, timeframe, from_datetime=None, till_datetime=None):
