@@ -21,11 +21,13 @@ strategy = ttm.strategy.SameValue(
 )
 storage = ttm.storage.JSONFile('real-storage.json')  # storage used mainly for strategy
 cache = ttm.storage.JSONFile('cache.json')           # storage used only for Bot class
+
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
 	ttm.logger.CSVFile('real-log.csv'),
 	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
+logger.set_pair('BTC/USD')
 
 bot = ttm.bot.Real(exchange, strategy, storage, cache, logger)
 

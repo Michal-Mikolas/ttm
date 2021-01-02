@@ -45,8 +45,14 @@ class Bot():
 	def run(self):
 		pass
 
-	def log(self, *args):
-		return self.logger.log(*args)
+	def now(self):
+		return datetime.now()
+
+	def log(self, message: str, *args):
+		return self.logger.log(message, self, *args)
+
+	def split_pair(self, pair: str):
+		return pair.split('/')  # TODO fix for values like 'BTCUSD'?
 
 	###
 	 #  #    # ##### ###### #####  #    #   ##   #
@@ -56,7 +62,7 @@ class Bot():
 	 #  #   ##   #   #      #   #  #   ## #    # #
 	### #    #   #   ###### #    # #    # #    # ######
 
-	def _download_ohlcvs(self, pair, timeframe, from_timestamp: int = None, till_timestamp: int = None):
+	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):
 		all_ohlcvs = None
 
 		# Try to load from cache

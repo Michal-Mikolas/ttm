@@ -21,13 +21,7 @@ class Real(Bot):
 	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger):
 		super().__init__(exchange, strategy, storage, cache, logger)
 
-	def buy(self, pair, amount, price: float = None):
-		# 1) Get pair price
-		if not price:
-			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-			price = ohlcvs[-1][4]
-
-		# 2) Create order
+	def buy(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'buy', amount, price)
 		# if self.exchange.has['createMarketOrder']:
 		# 	self.exchange.create_order(pair, 'market', 'buy', amount, price)
@@ -37,13 +31,7 @@ class Real(Bot):
 		# 	self.exchange.create_order(pair, 'limit', 'buy', amount, price)
 		# 	# self.exchange.create_limit_buy_order(pair, amount, price)
 
-	def sell(self, pair, amount, price: float = None):
-		# 1) Get pair price
-		if not price:
-			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-			price = ohlcvs[-1][4]
-
-		# 2) Create order
+	def sell(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'sell', amount, price)
 
 	def get_balance(self, symbol):
@@ -60,7 +48,7 @@ class Real(Bot):
 		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else None
 
 		# Fetch candles
-		ohlcvs = self._download_ohlcvs(pair,timeframe,from_timestamp,till_timestamp)
+		ohlcvs = self._download_ohlcvs(pair, timeframe, from_timestamp, till_timestamp)
 
 		# Finish
 		return ohlcvs
@@ -76,5 +64,32 @@ class Real(Bot):
 	def __del__(self):
 		self.strategy.finish()
 
-	def log(self, *args):
-		return self.logger.log(*args)
+	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):
+		if from_timestamp or till_timestamp:
+			ohlcvs = super()._download_ohlcvs(self, pair, timeframe, from_timestamp, till_timestamp)
+		else:
+			ohlcvs = self._download_last_ohlcvs(self, pair, timeframe)
+
+		return ohlcvs
+
+	def _download_last_ohlcvs(self, pair: str, timeframe: str):
+		ohlcvs = None
+		cache_key = "%s-%s" % (pair, timeframe)
+
+		# Try to load from cache
+		if cache_key in self.temp:
+			# Cache lasts for 2 seconds
+			if (datetime.now() - self.temp[cache_key]['created']).total_seconds() <= 2:
+				ohlcvs = self.temp[cache_key]['ohlcvs']
+
+		# If not in cache, download & cache
+		if not ohlcvs:
+			ohlcvs = super()._download_ohlcvs(self, pair, timeframe)
+
+			self.temp[cache_key] = {
+				'created': datetime.now(),
+				'ohlcvs': ohlcvs,
+			}
+
+		# Finish
+		return ohlcvs

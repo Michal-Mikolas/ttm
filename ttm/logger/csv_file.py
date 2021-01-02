@@ -1,4 +1,5 @@
 from ttm.logger import Logger
+from ttm.bot import Bot
 import csv
 
 """
@@ -15,9 +16,10 @@ class CSVFile(Logger):
 
 		self.file = file
 
-	def log(self, *args):
-		with open(self.file, 'a', newline='', encoding='utf8') as file:
-			values = self.format_values(args)
+	def log(self, message: str, bot: Bot, *args):
+		values = self.get_values(message, bot, *args)
+		values = self.format_values(values)
 
+		with open(self.file, 'a', newline='', encoding='utf8') as file:
 			writer = csv.writer(file)
 			writer.writerow(values)

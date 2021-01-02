@@ -22,11 +22,7 @@ class SameValue(Strategy):
 		self.sell_modifier = sell_modifier  # percent
 		self.buy_modifier = buy_modifier    # percent
 
-		(self.currency1, self.currency2) = self.pair.split('/')  # TODO fix for values like 'BTCUSD'?
-
-	def start(self):
-		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
-		self.log('Start', ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
+		(self.currency1, self.currency2) = self.bot.split_pair(self.pair)
 
 	def tick(self):
 		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
@@ -41,21 +37,11 @@ class SameValue(Strategy):
 			self.bot.sell(self.pair, sell_amount, ohlcv[4])
 			self.save_target_value((balance - sell_amount) * ohlcv[4])
 
-			self.log('Sold %f %s.' % (sell_amount, self.currency1), ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
-
 		elif move <= -1*self.minimal_move:
 			buy_amount = (target_balance - balance) * self.buy_modifier
 
 			self.bot.buy(self.pair, buy_amount, ohlcv[4])
 			self.save_target_value((balance + buy_amount) * ohlcv[4])
-
-			self.log('Bought %f %s.' % (buy_amount, self.currency1), ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
-
-	def finish(self):
-		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
-		self.log('Finish', ohlcv, self.bot.get_balance(self.currency1), self.bot.get_balance(self.currency2))
-
-		self.print_statistics()
 
 	################################################################################
 
@@ -72,24 +58,6 @@ class SameValue(Strategy):
 		self.bot.storage.save('target_value', target_value)
 
 	def log(self, message: str, ohlcv, balance1: float, balance2: float):
-		last_balance2 = self.bot.storage.get('last_balance2') or 0.0
-		balance2_change = balance2 - last_balance2
-
-		last_relative_balance2 = self.bot.storage.get('last_relative_balance2') or 0.0
-		relative_balance2 = last_relative_balance2 + balance2_change
-		relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
-
-		self.bot.log(
-			datetime.utcfromtimestamp(ohlcv[0]/1000),  # datetime
-			ohlcv[4],                                  # price
-			message,                                   # message
-			balance1,                                  # balance 1
-			balance2,                                  # balance 2
-			relative_balance2,                         # relative balance 2
-			balance1 * ohlcv[4],                       # value 1
-			balance1 * ohlcv[4] + balance2             # total value
-		)
-
 		self.bot.statistics.add('date', datetime.utcfromtimestamp(ohlcv[0]/1000))
 		self.bot.statistics.add('price', ohlcv[4])
 		self.bot.statistics.add('balance1', balance1)

@@ -22,21 +22,16 @@ class Backtest(Bot):
 		super().__init__(exchange, strategy, storage, cache, logger)
 
 		# backtesting
-		self.now = datetime.now()
 		self.backtest_from = parse(date_from)
+		self.now = self.backtest_from
 		self.backtest_to = parse(date_to)
 		self.backtest_balances = initial_balances
 		self.smallest_timeframe = None
 
 		self.statistics = RealStatistics()  # for backtesting, turn on statistics module
 
-	def buy(self, pair: str, amount: float, price: float = None):
-		# 1) Get pair price
-		if not price:
-			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-			price = ohlcvs[-1][4]
-
-		# 2) Calculate new balances
+	def buy(self, pair: str, amount: float, price: float):
+		# 1) Calculate new balances
 		currencies = pair.split('/')
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
@@ -44,21 +39,16 @@ class Backtest(Bot):
 		balance1 += amount
 		balance2 -= amount * price
 
-		# 3) Calculate fees
+		# 2) Calculate fees
 		fee = self._calculate_fee(pair, 'limit', 'buy', amount, price)
 		balance2 -= fee['cost']
 
-		# 4) Save new balances
+		# 3) Save new balances
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
-	def sell(self, pair: str, amount: float, price: float = None):
-		# 1) Get pair price
-		if not price:
-			ohlcvs = self.get_ohlcvs(pair, self.get_smallest_timeframe())
-			price = ohlcvs[-1][4]
-
-		# 2) Calculate new balances
+	def sell(self, pair: str, amount: float, price: float):
+		# 1) Calculate new balances
 		currencies = pair.split('/')
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
@@ -66,11 +56,11 @@ class Backtest(Bot):
 		balance1 -= amount
 		balance2 += amount * price
 
-		# 3) Calculate fees
+		# 2) Calculate fees
 		fee = self._calculate_fee(pair, 'limit', 'sell', amount, price)
 		balance2 -= fee['cost']
 
-		# 4) Save new balances
+		# 3) Save new balances
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
@@ -108,6 +98,7 @@ class Backtest(Bot):
 		# 1) Init
 		#
 		self.now = self.backtest_from
+		self.log('Starting')
 
 		#
 		# 2) Run simulation
@@ -122,35 +113,9 @@ class Backtest(Bot):
 			if self.now > self.backtest_to:
 				break
 
+	def now(self):
+		return self.now
+
 	def __del__(self):
+		self.log('Finishing')
 		self.strategy.finish()
-
-	def get_smallest_timeframe(self):
-		frames = {
-			3*60: '3m',
-			5*60: '5m',
-			15*60: '15m',
-			30*60: '30m',
-			1*60*60: '1h',
-			2*60*60: '2h',
-			3*60*60: '3h',
-			4*60*60: '4h',
-			6*60*60: '6h',
-			8*60*60: '8h',
-			12*60*60: '12h',
-			1*24*60*60: '1d',
-			3*24*60*60: '3d',
-			7*24*60*60: '1w',
-			14*24*60*60: '2w',
-			30*24*60*60: '1M',
-			365*24*60*60: '1y',
-		}
-
-		if self.smallest_timeframe in frames:
-			return frames[self.smallest_timeframe]
-		else:
-			return '1m'
-
-	def update_smallest_timeframe(self, timeframe):
-		seconds = self.exchange.parse_timeframe(timeframe)
-		self.smallest_timeframe = seconds if (self.smallest_timeframe is None or seconds < self.smallest_timeframe) else self.smallest_timeframe

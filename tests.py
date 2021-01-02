@@ -1,18 +1,12 @@
-import os
-import sys
-import time
 from datetime import datetime
 from dateutil.parser import parse
 import ccxt
 import ttm
 
-exchange = ccxt.bittrex({
-	# 'apiKey': '',
-	# 'secret': '',
-})
+exchange = ccxt.bittrex({'enableRateLimit': True})
 strategy = ttm.strategy.SameValue()
 storage = ttm.storage.JSONFile('storage.json')
-bot = ttm.BacktestBot(exchange, strategy, storage, '2019-01-01', '2019-04-01')
+bot = ttm.bot.Backtest(exchange, strategy, storage, '2019-01-01', '2019-04-01')
 
 #
 # Fee

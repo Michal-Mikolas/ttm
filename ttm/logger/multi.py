@@ -16,3 +16,6 @@ class Multi(Logger):
 
 	def log(self, *args):
 		[logger.log(*args) for logger in self.loggers]
+
+	def set_pair(self, pair):
+		[logger.set_pair(pair) for logger in self.loggers]

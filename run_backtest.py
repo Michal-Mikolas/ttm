@@ -26,11 +26,13 @@ strategy = ttm.strategy.SameValue(
 )
 storage = ttm.storage.JSONFile('backtest-storage.json')  # storage used mainly for strategy
 cache = ttm.storage.JSONFile('cache.json')               # storage used only for Bot class
+
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
 	ttm.logger.CSVFile('backtest-log.csv'),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
+logger.set_pair('BTC/USD')
 
 # max range:  '2018-06-01', '2020-12-26'
 # 7.5k-7.5k:  '2018-06-01', '2020-04-24'
