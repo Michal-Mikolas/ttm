@@ -57,7 +57,7 @@ class Real(Bot):
 	def get_ohlcvs(self, pair, timeframe, from_datetime=None, till_datetime=None):
 		# Prepare
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
-		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.now)
+		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else None
 
 		# Fetch candles
 		ohlcvs = self._download_ohlcvs(pair,timeframe,from_timestamp,till_timestamp)

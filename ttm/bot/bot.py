@@ -70,14 +70,20 @@ class Bot():
 
 			all_ohlcvs = []
 			page_start_timestamp = from_timestamp
-			while page_start_timestamp < till_timestamp:
+			while True:
 				ohlcvs = self.exchange.fetch_ohlcv(pair, timeframe, page_start_timestamp, till_timestamp)
 				all_ohlcvs += ohlcvs
 
 				page_start_timestamp = all_ohlcvs[-1][0] + ohlcv_duration
 
+				if from_timestamp is None or till_timestamp is None or page_start_timestamp >= till_timestamp:
+					break
+
 			# fix for exchanges that returns more data then asked
-			all_ohlcvs = [x for x in all_ohlcvs if x[0] >= from_timestamp and x[0] <= till_timestamp]
+			if from_timestamp:
+				all_ohlcvs = [x for x in all_ohlcvs if x[0] >= from_timestamp]
+			if till_timestamp:
+				all_ohlcvs = [x for x in all_ohlcvs if x[0] <= till_timestamp]
 
 			# Save results to cache if possible
 			if cache_key:
