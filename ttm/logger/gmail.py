@@ -1,6 +1,5 @@
 import yagmail
 from ttm.logger import Logger
-from ttm.bot import Bot
 
 """
 (This file is part of TTM package)
@@ -18,7 +17,7 @@ class Gmail(Logger):
 		self.yag = yagmail.SMTP(login, password)
 		self.subject = subject
 
-	def log(self, message: str, bot: Bot, *args):
+	def log(self, message: str, bot, *args):
 		values = self.get_values(message, bot, *args)
 		values = self.format_values(values)
 

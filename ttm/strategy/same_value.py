@@ -22,6 +22,7 @@ class SameValue(Strategy):
 		self.sell_modifier = sell_modifier  # percent
 		self.buy_modifier = buy_modifier    # percent
 
+	def start(self):
 		(self.currency1, self.currency2) = self.bot.split_pair(self.pair)
 
 	def tick(self):

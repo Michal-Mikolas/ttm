@@ -6,7 +6,6 @@ from ttm.statistics import Fake as FakeStatistics
 from datetime import datetime
 from dateutil.parser import parse
 
-
 """
 (This file is part of TTM package)
 
@@ -39,7 +38,7 @@ class Bot():
 	def get_balance(self, symbol):
 		pass
 
-	def get_ohlcvs(self, pair, timeframe, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair, timeframe=None, from_datetime=None, till_datetime=None):
 		pass
 
 	def run(self):
@@ -95,7 +94,16 @@ class Bot():
 			if cache_key:
 				self.cache.save(cache_key, all_ohlcvs)
 
+		# Finish
+		self.temp['last_timeframe'] = timeframe
+
 		return all_ohlcvs
+
+	def _get_last_timeframe(self):
+		if 'last_timeframe' not in self.temp:
+			return None
+
+		return self.temp['last_timeframe']
 
 	def _to_exchange_timestamp(self, date=None):
 		if type(date) is str:

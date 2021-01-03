@@ -1,6 +1,5 @@
 from ttm.logger import Logger
 from datetime import datetime
-from ttm.bot import Bot
 
 """
 (This file is part of TTM package)
@@ -14,7 +13,7 @@ class Console(Logger):
 	def __init__(self):
 		pass
 
-	def log(self, message: str, bot: Bot, *args):
+	def log(self, message: str, bot, *args):
 		values = self.get_values(message, bot, *args)
 
 		output = ''

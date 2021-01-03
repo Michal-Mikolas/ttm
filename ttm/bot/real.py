@@ -42,8 +42,12 @@ class Real(Bot):
 		else:
 			return 0.0
 
-	def get_ohlcvs(self, pair, timeframe, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair, timeframe: str = None, from_datetime=None, till_datetime=None):
 		# Prepare
+		timeframe = timeframe if timeframe else self._get_last_timeframe()
+		if not timeframe:
+			return None
+
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
 		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else None
 

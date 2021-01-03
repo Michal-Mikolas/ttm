@@ -23,16 +23,15 @@ class Backtest(Bot):
 
 		# backtesting
 		self.backtest_from = parse(date_from)
-		self.now = self.backtest_from
+		self.backtest_now = self.backtest_from
 		self.backtest_to = parse(date_to)
 		self.backtest_balances = initial_balances
-		self.smallest_timeframe = None
 
 		self.statistics = RealStatistics()  # for backtesting, turn on statistics module
 
 	def buy(self, pair: str, amount: float, price: float):
 		# 1) Calculate new balances
-		currencies = pair.split('/')
+		currencies = self.split_pair(pair)
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
 
@@ -47,9 +46,12 @@ class Backtest(Bot):
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
+		# 4) Finish
+		self.log('Bought {:f} {:s}'.format(amount, currencies[0]))
+
 	def sell(self, pair: str, amount: float, price: float):
 		# 1) Calculate new balances
-		currencies = pair.split('/')
+		currencies = self.split_pair(pair)
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
 
@@ -64,15 +66,23 @@ class Backtest(Bot):
 		self.backtest_balances[currencies[0]] = balance1
 		self.backtest_balances[currencies[1]] = balance2
 
+		# 4) Finish
+		self.log('Sold {:f} {:s}'.format(amount, currencies[0]))
+
 	def get_balance(self, symbol):
 		if symbol not in self.backtest_balances:
 			self.backtest_balances[symbol] = 0.0
 
 		return self.backtest_balances[symbol]
 
-	def get_ohlcvs(self, pair: str, timeframe: str, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair: str, timeframe: str = None, from_datetime=None, till_datetime=None):
+		# Prepare
+		timeframe = timeframe if timeframe else self._get_last_timeframe()
+		if not timeframe:
+			return None
+
 		from_timestamp = self.exchange.parse8601(from_datetime) if from_datetime else None
-		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.now)
+		till_timestamp = self.exchange.parse8601(till_datetime) if till_datetime else self._to_exchange_timestamp(self.backtest_now)
 
 		# Save whole backtest period ...
 		temp_key = pair + '-' + timeframe
@@ -90,14 +100,13 @@ class Backtest(Bot):
 			ohlcvs = [x for x in ohlcvs if x[0] >= from_timestamp]
 
 		# Finish
-		self.update_smallest_timeframe(timeframe)
 		return ohlcvs
 
 	def run(self):
 		#
 		# 1) Init
 		#
-		self.now = self.backtest_from
+		self.backtest_now = self.backtest_from
 		self.log('Starting')
 
 		#
@@ -108,13 +117,13 @@ class Backtest(Bot):
 		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
 			self.strategy.tick()
-			self.now = self.now + tick
+			self.backtest_now = self.backtest_now + tick
 
-			if self.now > self.backtest_to:
+			if self.backtest_now > self.backtest_to:
 				break
 
 	def now(self):
-		return self.now
+		return self.backtest_now
 
 	def __del__(self):
 		self.log('Finishing')
