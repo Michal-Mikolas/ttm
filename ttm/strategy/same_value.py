@@ -58,18 +58,6 @@ class SameValue(Strategy):
 	def save_target_value(self, target_value):
 		self.bot.storage.save('target_value', target_value)
 
-	def log(self, message: str, ohlcv, balance1: float, balance2: float):
-		self.bot.statistics.add('date', datetime.utcfromtimestamp(ohlcv[0]/1000))
-		self.bot.statistics.add('price', ohlcv[4])
-		self.bot.statistics.add('balance1', balance1)
-		self.bot.statistics.add('balance2', balance2)
-		self.bot.statistics.add('relative_balance2', relative_balance2)
-		self.bot.statistics.add('value', balance1 * ohlcv[4])
-		self.bot.statistics.add('total_value', balance1 * ohlcv[4] + balance2)
-
-		self.bot.storage.save('last_balance2', balance2)
-		self.bot.storage.save('last_relative_balance2', relative_balance2)
-
 	def print_statistics(self):
 		stats = self.bot.statistics
 

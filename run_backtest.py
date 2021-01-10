@@ -2,12 +2,14 @@ import os
 import ccxt
 import ttm
 
+data_folder = 'output/7.5k-7.5k_0.97-1.03'
+
 #
 # Clean from last run
 #
 try:
-	os.remove('backtest-storage.json')
-	os.remove('backtest-log.csv')
+	os.remove(data_folder + '/storage.json')
+	os.remove(data_folder + '/log.csv')
 except:
 	pass
 
@@ -24,13 +26,14 @@ strategy = ttm.strategy.SameValue(
 	sell_modifier=0.97,
 	buy_modifier=1.03,
 )
-storage = ttm.storage.JSONFile('backtest-storage.json')  # storage used mainly for strategy
-cache = ttm.storage.JSONFile('cache.json')               # storage used only for Bot class
+storage = ttm.storage.JSONFile(data_folder + '/storage.json')  # storage for strategy data
+cache = ttm.storage.JSONFile('cache.json')                     # storage for performance optimalisation
 
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
-	ttm.logger.CSVFile('backtest-log.csv'),
+	ttm.logger.CSVFile(data_folder + '/log.csv'),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
+	# ttm.logger.Statistics(storage, data_folder),
 )
 logger.set_pair('BTC/USD')
 

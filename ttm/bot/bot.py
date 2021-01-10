@@ -2,9 +2,7 @@ from ccxt import Exchange
 from ttm.strategy import Strategy
 from ttm.storage import Storage
 from ttm.logger import Logger
-from ttm.statistics import Fake as FakeStatistics
 from datetime import datetime
-from dateutil.parser import parse
 
 """
 (This file is part of TTM package)
@@ -26,8 +24,6 @@ class Bot():
 		self.logger = logger
 
 		self.temp = {}
-
-		self.statistics = FakeStatistics()  # in real run, statistics are disabled because of performance
 
 	def buy(self, pair, amount, price: float = None):
 		pass

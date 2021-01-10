@@ -3,7 +3,6 @@ from ttm.bot import Bot
 from ttm.strategy import Strategy
 from ttm.storage import Storage
 from ttm.logger import Logger
-from ttm.statistics import Fake as FakeStatistics
 from datetime import datetime
 from dateutil.parser import parse
 import time

@@ -9,13 +9,13 @@ TTM - ToTheMoon crypto trading bot
 """
 class Multi(Logger):
 
-	def __init__(self, *args):
+	def __init__(self, *loggers):
 		super().__init__()
 
-		self.loggers = args
-
-	def log(self, *args):
-		[logger.log(*args) for logger in self.loggers]
+		self.loggers = loggers
 
 	def set_pair(self, pair):
 		[logger.set_pair(pair) for logger in self.loggers]
+
+	def log(self, message: str, bot, extra_values={}):
+		[logger.log(message, bot, extra_values) for logger in self.loggers]

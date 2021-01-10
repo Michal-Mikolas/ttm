@@ -10,18 +10,18 @@ TTM - ToTheMoon crypto trading bot
 """
 class Gmail(Logger):
 
-	def __init__(self, to: str, login: str, password: str = None, subject='TTM - Notification'):
+	def __init__(self, to: str, login: str, password: str = None, subject='TTM Bot- Notification'):
 		super().__init__()
 
 		self.to = to
 		self.yag = yagmail.SMTP(login, password)
 		self.subject = subject
 
-	def log(self, message: str, bot, *args):
-		values = self.get_values(message, bot, *args)
+	def log(self, message: str, bot, extra_values = {}):
+		values = self.get_values(message, bot, extra_values)
 		values = self.format_values(values)
 
-		values = [str(value) for value in values]
+		values = [str(value) for value in values.values()]
 		body = ' | '.join(values)
 
 		self.yag.send(self.to, self.subject, body)

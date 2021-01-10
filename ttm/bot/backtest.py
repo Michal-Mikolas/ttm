@@ -3,7 +3,6 @@ from ttm.bot import Bot
 from ttm.strategy import Strategy
 from ttm.storage import Storage
 from ttm.logger import Logger
-from ttm.statistics import Real as RealStatistics
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 
@@ -26,8 +25,6 @@ class Backtest(Bot):
 		self.backtest_now = self.backtest_from
 		self.backtest_to = parse(date_to)
 		self.backtest_balances = initial_balances
-
-		self.statistics = RealStatistics()  # for backtesting, turn on statistics module
 
 	def buy(self, pair: str, amount: float, price: float):
 		# 1) Calculate new balances

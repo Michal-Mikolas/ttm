@@ -4,9 +4,20 @@ import ccxt
 import ttm
 
 exchange = ccxt.bittrex({'enableRateLimit': True})
-strategy = ttm.strategy.SameValue()
-storage = ttm.storage.JSONFile('storage.json')
-bot = ttm.bot.Backtest(exchange, strategy, storage, '2019-01-01', '2019-04-01')
+strategy = ttm.strategy.SameValue('BTC/USD', 100)
+storage = ttm.storage.JSONFile('test-storage.json')
+cache = ttm.storage.JSONFile('cache.json')
+logger = ttm.logger.Console()
+logger.set_pair('BTC/USD')
+bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-01-01', '2019-04-01')
+
+#
+# CCXT
+#
+ohlcvs = exchange.fetch_ohlcv('BTC/USD', '1d')
+assert len(ohlcvs) > 1, "Exchange fetch_ohlcv test 1 failed"
+assert ohlcvs[-1][0] > 1606780800000, "Exchange fetch_ohlcv test 2 failed"
+assert ohlcvs[-1][4] > 0, "Exchange fetch_ohlcv test 3 failed"
 
 #
 # Fee
@@ -42,7 +53,7 @@ assert last.strftime('%Y-%m-%d %H:%M:%S') == '2019-01-01 10:00:00', "bot.get_ohl
 
 ohlcvs = bot.get_ohlcvs('BTC/USD', '1h')
 last = datetime.utcfromtimestamp(ohlcvs[-1][0] / 1000)
-assert last.strftime('%Y-%m-%d') == '2019-03-31', "bot.get_ohlcvs() 'no date interval' test failed"
+assert last.strftime('%Y-%m-%d') == '2019-01-01', "bot.get_ohlcvs() 'no date interval' test failed"
 
 ohlcvs = bot.get_ohlcvs('BTC/USD', '1h', '2019-01-01 12:00:00', '2019-04-01 12:00:00')
 # for ohlcv in ohlcvs:
@@ -54,10 +65,6 @@ assert first.strftime('%Y-%m-%d') == '2019-01-01', "bot.get_ohlcvs() pagination 
 assert last.strftime('%Y-%m-%d') == '2019-03-31', "bot.get_ohlcvs() pagination test 2 failed"
 
 ############################################################
-# while True:
-# 	orderbook = exchange.fetch_order_book('BTC/EUR')
-# 	print(orderbook['bids'][0], orderbook['asks'][0])
-# 	time.sleep(2)
 
 print("")
 print("All test passed :-)")

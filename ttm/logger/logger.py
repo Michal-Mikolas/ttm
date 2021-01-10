@@ -12,15 +12,15 @@ class Logger():
 	def set_pair(self, pair: str):
 		self.pair = pair
 
-	def log(self, message: str, bot, *args):
+	def log(self, message: str, bot, extra_values = {}):
 		raise NotImplementedError
 
-	def get_values(self, message: str, bot, *args):
+	def get_values(self, message: str, bot, extra_values = {}):
 		# Basic values
-		values = [
-			bot.now(),
-			message,
-		]
+		values = {
+			'date': bot.now(),
+			'message': message,
+		}
 
 		# Pair-related values
 		if self.pair:
@@ -33,29 +33,32 @@ class Logger():
 				balance2 = bot.get_balance(currency2)
 
 				# Relative balance
-				last_balance2 = bot.storage.get('last_balance2') or 0.0
+				last_balance2 = bot.storage.get('logger_last_balance2') or 0.0
 				balance2_change = balance2 - last_balance2
-				last_relative_balance2 = bot.storage.get('last_relative_balance2') or 0.0
+				last_relative_balance2 = bot.storage.get('logger_last_relative_balance2') or 0.0
 				relative_balance2 = last_relative_balance2 + balance2_change
 				relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
 
-				values = values + [
-					price,
-					balance1,
-					balance2,
-					relative_balance2,
-					balance1 * price,            # value 1
-					balance1 * price + balance2  # total value
-				]
+				values.update({
+					'price':             price,
+					'balance1':          balance1,
+					'balance2':          balance2,
+					'relative_balance2': relative_balance2,
+					'value1':            balance1 * price,
+					'total_value':       balance1 * price + balance2,
+				})
+
+				bot.storage.save('logger_last_balance2', balance2)
+				bot.storage.save('logger_last_relative_balance2', relative_balance2)
 
 		# Extra values
-		values = values + list(args)
+		values.update(extra_values)
 
 		# Return
 		return values
 
 	def format_values(self, values):
-		return [self.format_value(x) for x in values]
+		return {key: self.format_value(values[key]) for key in values}
 
 	def format_value(self, value):
 		if type(value) is datetime:
