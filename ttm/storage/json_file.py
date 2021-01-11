@@ -1,5 +1,7 @@
 import json
 from ttm.storage import Storage
+import os
+from pathlib import Path
 
 """
 (This file is part of TTM package)
@@ -52,5 +54,9 @@ class JSONFile(Storage):
 			self.data = json.load(file)
 
 	def _resave(self):
+		# Prepare directory
+		directory = os.path.dirname(self.file)
+		Path(directory).mkdir(parents=True, exist_ok=True)
+
 		with open(self.file, 'w') as file:
 			json.dump(self.data, file, indent=4)

@@ -12,15 +12,15 @@ exchange = ccxt.bittrex({
 })
 strategy = ttm.strategy.SameValue(
 	pair='BTC/EUR',
-	initial_target_value=100,  # USD
+	initial_target_value=100,  # EUR
 	minimal_move=5.0,          # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.97,
 	buy_modifier=1.03,
 )
-storage = ttm.storage.JSONFile('real-storage.json')  # storage used mainly for strategy
-cache = ttm.storage.JSONFile('cache.json')           # storage used only for Bot class
+storage = ttm.storage.JSONFile('real-storage.json')  # storage for strategy data
+cache = ttm.storage.JSONFile('cache.json')           # storage for performance optimalisation
 
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
