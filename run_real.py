@@ -5,6 +5,8 @@ import keyring
 #
 # Init
 #
+data_folder = 'output/real'
+
 exchange = ccxt.bittrex({
 	'enableRateLimit': True,
 	'apiKey': keyring.get_password('bittrex', 'apiKey'),
@@ -19,15 +21,15 @@ strategy = ttm.strategy.SameValue(
 	sell_modifier=0.97,
 	buy_modifier=1.03,
 )
-storage = ttm.storage.JSONFile('real-storage.json')  # storage for strategy data
-cache = ttm.storage.JSONFile('cache.json')           # storage for performance optimalisation
+storage = ttm.storage.JSONFile(data_folder + '/storage.json')  # storage for strategy data
+cache = ttm.storage.JSONFile('cache.json')                     # storage for performance optimalisation
 
 logger = ttm.logger.Multi(
 	ttm.logger.Console(),
-	ttm.logger.CSVFile('real-log.csv'),
+	ttm.logger.CSVFile(data_folder + '/log.csv'),
 	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
-logger.set_pair('BTC/USD')
+logger.set_pair('BTC/EUR')
 
 bot = ttm.bot.Real(exchange, strategy, storage, cache, logger)
 

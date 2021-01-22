@@ -62,16 +62,16 @@ class Real(Bot):
 		while True:
 			self.strategy.tick()
 
-			time.wait(self.strategy.tick_period)
+			time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
 		self.strategy.finish()
 
 	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):
 		if from_timestamp or till_timestamp:
-			ohlcvs = super()._download_ohlcvs(self, pair, timeframe, from_timestamp, till_timestamp)
+			ohlcvs = super()._download_ohlcvs(pair, timeframe, from_timestamp, till_timestamp)
 		else:
-			ohlcvs = self._download_last_ohlcvs(self, pair, timeframe)
+			ohlcvs = self._download_last_ohlcvs(pair, timeframe)
 
 		return ohlcvs
 
@@ -87,7 +87,7 @@ class Real(Bot):
 
 		# If not in cache, download & cache
 		if not ohlcvs:
-			ohlcvs = super()._download_ohlcvs(self, pair, timeframe)
+			ohlcvs = super()._download_ohlcvs(pair, timeframe)
 
 			self.temp[cache_key] = {
 				'created': datetime.now(),
