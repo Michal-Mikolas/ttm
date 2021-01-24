@@ -22,6 +22,9 @@ class SameValue(Strategy):
 		self.sell_modifier = sell_modifier  # percent
 		self.buy_modifier = buy_modifier    # percent
 
+		# Internal
+		self.error_sent = False
+
 	def start(self):
 		(self.currency1, self.currency2) = self.bot.split_pair(self.pair)
 
@@ -35,7 +38,7 @@ class SameValue(Strategy):
 		if move >= self.minimal_move:
 			sell_amount = (balance - target_balance) * self.sell_modifier
 
-			self.bot.sell(self.pair, sell_amount, ohlcv[4])
+			self.sell(self.pair, sell_amount, ohlcv[4])
 			self.save_target_value((balance - sell_amount) * ohlcv[4])
 
 		elif move <= -1*self.minimal_move:
@@ -45,6 +48,30 @@ class SameValue(Strategy):
 			self.save_target_value((balance + buy_amount) * ohlcv[4])
 
 	################################################################################
+
+	def buy(self, pair, amount, price):
+		try:
+			self.bot.buy(pair, amount, price)
+			self.error_sent = False
+
+		except:
+			if self.error_sent:
+				pass
+			else:
+				self.bot.log('Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1))
+				self.error_sent = True
+
+	def sell(self, pair, amount, price):
+		try:
+			self.bot.sell(pair, amount, price)
+			self.error_sent = False
+
+		except:
+			if self.error_sent:
+				pass
+			else:
+				self.bot.log('Sell of {:5.5f} {:s} failed.'.format(amount, self.currency1))
+				self.error_sent = True
 
 	def get_target_value(self):
 		target_value = self.bot.storage.get('target_value')
