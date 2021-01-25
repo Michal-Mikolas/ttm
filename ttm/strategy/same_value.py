@@ -38,40 +38,44 @@ class SameValue(Strategy):
 		if move >= self.minimal_move:
 			sell_amount = (balance - target_balance) * self.sell_modifier
 
-			self.sell(self.pair, sell_amount, ohlcv[4])
-			self.save_target_value((balance - sell_amount) * ohlcv[4])
+			if self.sell(self.pair, sell_amount, ohlcv[4]):
+				self.save_target_value((balance - sell_amount) * ohlcv[4])
 
 		elif move <= -1*self.minimal_move:
 			buy_amount = (target_balance - balance) * self.buy_modifier
 
-			self.bot.buy(self.pair, buy_amount, ohlcv[4])
-			self.save_target_value((balance + buy_amount) * ohlcv[4])
+			if self.bot.buy(self.pair, buy_amount, ohlcv[4]):
+				self.save_target_value((balance + buy_amount) * ohlcv[4])
 
 	################################################################################
 
 	def buy(self, pair, amount, price):
 		try:
 			self.bot.buy(pair, amount, price)
+
 			self.error_sent = False
+			return True
 
 		except:
-			if self.error_sent:
-				pass
-			else:
-				self.bot.log('Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1))
-				self.error_sent = True
+			self.bot.log(
+				'Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1),
+				priority=(0 if self.error_sent else 2)
+			)
+			self.error_sent = True
 
 	def sell(self, pair, amount, price):
 		try:
 			self.bot.sell(pair, amount, price)
+
 			self.error_sent = False
+			return True
 
 		except:
-			if self.error_sent:
-				pass
-			else:
-				self.bot.log('Sell of {:5.5f} {:s} failed.'.format(amount, self.currency1))
-				self.error_sent = True
+			self.bot.log(
+				'Sell of {:5.5f} {:s} failed.'.format(amount, self.currency1),
+				priority=(0 if self.error_sent else 2)
+			)
+			self.error_sent = True
 
 	def get_target_value(self):
 		target_value = self.bot.storage.get('target_value')

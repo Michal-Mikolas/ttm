@@ -12,7 +12,7 @@ class Logger():
 	def set_pair(self, pair: str):
 		self.pair = pair
 
-	def log(self, message: str, bot, extra_values = {}):
+	def log(self, message: str, bot, priority = 2, extra_values = {}):
 		raise NotImplementedError
 
 	def get_values(self, message: str, bot, extra_values = {}):

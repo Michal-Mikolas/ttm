@@ -10,15 +10,21 @@ TTM - ToTheMoon crypto trading bot
 """
 class Console(Logger):
 
-	def __init__(self):
+	def __init__(self, min_priority = 0):
+		self.columns = 0
 		self.counter = 0
 
-	def log(self, message: str, bot, extra_values = {}):
+		self.min_priority = min_priority
+
+	def log(self, message: str, bot, priority = 2, extra_values = {}):
+		if priority < self.min_priority:
+			return
+
 		# Prepare
 		values = self.get_values(message, bot, extra_values)
 
 		# Print header?
-		if self.counter % 10 == 1:
+		if (self.counter % 10 == 0) or (self.columns < len(values)):
 			self.print_header(values)
 
 		# Print values
@@ -29,14 +35,15 @@ class Console(Logger):
 		print(output)
 
 		# Finish
+		self.columns = len(values)
 		self.counter += 1
 
 	def format_value(self, value):
 		if type(value) is str:
-			value = "{:24s}".format(value)
+			value = "{:30s}".format(value)
 
 		elif type(value) is datetime:
-			value = "{:20s}".format(value.strftime('%Y-%m-%d %H:%M:%S'))
+			value = "{:21s}".format(value.strftime('%Y-%m-%d %H:%M:%S'))
 
 		elif type(value) is int:
 			value = "{:6d}".format(value)
@@ -59,10 +66,10 @@ class Console(Logger):
 			header = key.capitalize()
 
 			if type(value) is str:
-				header = "{:24s}".format(header[0:24])
+				header = "{:30s}".format(header[0:30])
 
 			elif type(value) is datetime:
-				header = "{:20s}".format(header[0:20])
+				header = "{:21s}".format(header[0:21])
 
 			elif type(value) is int:
 				# header = "{:6s}".format(header[0:6])

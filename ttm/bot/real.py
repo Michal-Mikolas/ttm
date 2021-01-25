@@ -57,14 +57,17 @@ class Real(Bot):
 		return ohlcvs
 
 	def run(self):
+		self.log('Starting bot...', priority=1)
 		self.strategy.start()
 
 		while True:
+			self.log('tick...', priority=0)
 			self.strategy.tick()
 
 			time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
+		self.log('Terminating bot...', priority=1)
 		self.strategy.finish()
 
 	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):

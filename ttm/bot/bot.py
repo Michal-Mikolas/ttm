@@ -43,11 +43,11 @@ class Bot():
 	def now(self):
 		return datetime.now()
 
-	def log(self, message: str, *args):
-		return self.logger.log(message, self, *args)
+	def log(self, message: str, priority = 2, *args):
+		return self.logger.log(message, self, priority, *args)
 
 	def split_pair(self, pair: str):
-		return pair.split('/')  # TODO fix for values like 'BTCUSD'?
+		return pair.split('/')
 
 	###
 	 #  #    # ##### ###### #####  #    #   ##   #

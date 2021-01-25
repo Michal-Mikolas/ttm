@@ -104,7 +104,7 @@ class Backtest(Bot):
 		# 1) Init
 		#
 		self.backtest_now = self.backtest_from
-		self.log('Starting')
+		self.log('Starting bot...', priority=1)
 
 		#
 		# 2) Run simulation
@@ -113,6 +113,7 @@ class Backtest(Bot):
 
 		tick = timedelta(seconds=self.strategy.tick_period)
 		while True:
+			self.log('tick...', priority=0)
 			self.strategy.tick()
 			self.backtest_now = self.backtest_now + tick
 
@@ -123,5 +124,5 @@ class Backtest(Bot):
 		return self.backtest_now
 
 	def __del__(self):
-		self.log('Finishing')
+		self.log('Terminating bot...', priority=1)
 		self.strategy.finish()

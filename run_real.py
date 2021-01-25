@@ -25,9 +25,9 @@ storage = ttm.storage.JSONFile(data_folder + '/storage.json')  # storage for str
 cache = ttm.storage.JSONFile('cache.json')                     # storage for performance optimalisation
 
 logger = ttm.logger.Multi(
-	ttm.logger.Console(),
-	ttm.logger.CSVFile(data_folder + '/log.csv'),
-	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com'),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
+	ttm.logger.Console(min_priority=0),
+	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
+	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
 logger.set_pair('BTC/EUR')
 
