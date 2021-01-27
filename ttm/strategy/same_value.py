@@ -44,7 +44,7 @@ class SameValue(Strategy):
 		elif move <= -1*self.minimal_move:
 			buy_amount = (target_balance - balance) * self.buy_modifier
 
-			if self.bot.buy(self.pair, buy_amount, ohlcv[4]):
+			if self.buy(self.pair, buy_amount, ohlcv[4]):
 				self.save_target_value((balance + buy_amount) * ohlcv[4])
 
 	################################################################################

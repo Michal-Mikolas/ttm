@@ -15,7 +15,7 @@ exchange = ccxt.bittrex({
 strategy = ttm.strategy.SameValue(
 	pair='BTC/EUR',
 	initial_target_value=100,  # EUR
-	minimal_move=5.0,          # percent
+	minimal_move=1.0,          # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.97,
@@ -27,6 +27,7 @@ cache = ttm.storage.JSONFile('cache.json')                     # storage for per
 logger = ttm.logger.Multi(
 	ttm.logger.Console(min_priority=0),
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
+	ttm.logger.CSVFile('C:/Users/mikolas/Google Drive/sync/ttm-log.csv', min_priority=0),
 	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
 logger.set_pair('BTC/EUR')

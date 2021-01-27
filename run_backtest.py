@@ -2,7 +2,7 @@ import os
 import ccxt
 import ttm
 
-data_folder = 'output/7.5k-7.5k_0.97-1.03'
+data_folder = 'output/7.5k-7.5k_0.97-1.03_0.7'
 
 #
 # Clean from last run
@@ -32,15 +32,15 @@ cache = ttm.storage.JSONFile('cache.json')                     # storage for per
 logger = ttm.logger.Multi(
 	ttm.logger.Console(min_priority=1),
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
+	ttm.logger.Statistics(storage, data_folder, min_priority=0),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
-	# ttm.logger.Statistics(storage, data_folder, min_priority=0),
 )
 logger.set_pair('BTC/USD')
 
 # max range:  '2018-06-01', '2020-12-26'
 # 7.5k-7.5k:  '2018-06-01', '2020-04-24'
 # 7.5k-24.5k: '2020-04-24', '2020-12-26'
-bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
+bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-06-01', '2018-07-01', {
 	'BTC': 0.013227,
 	'USD': 0.0,
 })
