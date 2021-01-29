@@ -43,8 +43,8 @@ class Bot():
 	def now(self):
 		return datetime.now()
 
-	def log(self, message: str, priority = 2, *args):
-		return self.logger.log(message, self, priority, *args)
+	def log(self, message: str, priority = 2, extra_values = {}):
+		return self.logger.log(message, self, priority, extra_values)
 
 	def split_pair(self, pair: str):
 		return pair.split('/')

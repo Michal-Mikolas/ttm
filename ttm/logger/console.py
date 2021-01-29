@@ -24,7 +24,7 @@ class Console(Logger):
 		values = self.get_values(message, bot, extra_values)
 
 		# Print header?
-		if (self.counter % 10 == 0) or (self.columns < len(values)):
+		if (self.counter % 10 == 0) or (len(values) > self.columns):
 			self.print_header(values)
 
 		# Print values
@@ -35,7 +35,7 @@ class Console(Logger):
 		print(output)
 
 		# Finish
-		self.columns = len(values)
+		self.columns = max(self.columns, len(values))
 		self.counter += 1
 
 	def format_value(self, value):
@@ -54,7 +54,7 @@ class Console(Logger):
 			value = value.rjust(12) + '  '
 
 		else:
-			value = "{:24s}".format(value)
+			value = "{:24s}".format(str(value))
 
 		return value
 

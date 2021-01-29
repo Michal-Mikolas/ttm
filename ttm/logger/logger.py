@@ -23,7 +23,7 @@ class Logger():
 		}
 
 		# Pair-related values
-		if self.pair:
+		if self.pair and extra_values is not False:
 			(currency1, currency2) = bot.split_pair(self.pair)
 
 			ohlcvs = bot.get_ohlcvs(self.pair)
@@ -52,7 +52,8 @@ class Logger():
 				bot.storage.save('logger_last_relative_balance2', relative_balance2)
 
 		# Extra values
-		values.update(extra_values)
+		if extra_values:
+			values.update(extra_values)
 
 		# Return
 		return values

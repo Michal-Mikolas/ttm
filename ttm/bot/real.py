@@ -1,3 +1,4 @@
+import ccxt
 from ccxt import Exchange
 from ttm.bot import Bot
 from ttm.strategy import Strategy
@@ -34,7 +35,10 @@ class Real(Bot):
 		self.exchange.create_order(pair, 'limit', 'sell', amount, price)
 
 	def get_balance(self, symbol):
-		balances = self.exchange.fetch_free_balance()
+		try:
+			balances = self.exchange.fetch_free_balance()
+		except:
+			balances = {}
 
 		if symbol in balances:
 			return balances[symbol]
@@ -61,10 +65,15 @@ class Real(Bot):
 		self.strategy.start()
 
 		while True:
-			self.log('tick...', priority=0)
-			self.strategy.tick()
+			try:
+				self.log('tick...', priority=0)
+				self.strategy.tick()
 
-			time.sleep(self.strategy.tick_period)
+			except (ccxt.RequestTimeout, ccxt.NetworkError):
+				self.log('network error...', priority=0, extra_values=False)
+
+			finally:
+				time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
 		self.log('Terminating bot...', priority=1)
@@ -84,8 +93,8 @@ class Real(Bot):
 
 		# Try to load from cache
 		if cache_key in self.temp:
-			# Cache lasts for 2 seconds
-			if (datetime.now() - self.temp[cache_key]['created']).total_seconds() <= 2:
+			# Cache lasts for 30 seconds
+			if (datetime.now() - self.temp[cache_key]['created']).total_seconds() <= 30:
 				ohlcvs = self.temp[cache_key]['ohlcvs']
 
 		# If not in cache, download & cache

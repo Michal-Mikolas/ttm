@@ -1,3 +1,4 @@
+import ccxt
 from datetime import datetime
 from ttm.strategy import Strategy
 
@@ -56,10 +57,15 @@ class SameValue(Strategy):
 			self.error_sent = False
 			return True
 
-		except:
+		except ccxt.InvalidOrder as e:
 			self.bot.log(
 				'Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1),
 				priority=(0 if self.error_sent else 2)
+			)
+			self.bot.log(
+				e,
+				priority=(0 if self.error_sent else 2),
+				extra_values=False
 			)
 			self.error_sent = True
 
@@ -70,10 +76,15 @@ class SameValue(Strategy):
 			self.error_sent = False
 			return True
 
-		except:
+		except ccxt.InvalidOrder as e:
 			self.bot.log(
-				'Sell of {:5.5f} {:s} failed.'.format(amount, self.currency1),
+				'Sell of {:5.5f} {:s} failed...'.format(amount, self.currency1),
 				priority=(0 if self.error_sent else 2)
+			)
+			self.bot.log(
+				e,
+				priority=(0 if self.error_sent else 2),
+				extra_values=False
 			)
 			self.error_sent = True
 
@@ -88,84 +99,3 @@ class SameValue(Strategy):
 
 	def save_target_value(self, target_value):
 		self.bot.storage.save('target_value', target_value)
-
-	def print_statistics(self):
-		stats = self.bot.statistics
-
-		print('')
-		print('# Price')
-		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.data['price'][0],
-			stats.get_max('price'),
-			stats.get_min('price'),
-			stats.data['price'][-1],
-		))
-
-		print('')
-		print('# Cash balance')
-		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.data['balance2'][0],
-			stats.get_max('balance2'),
-			stats.get_min('balance2'),
-			stats.data['balance2'][-1],
-		))
-		print('• P20-P50-P80: {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.get_percentil('balance2', 20),
-			stats.get_percentil('balance2', 50),
-			stats.get_percentil('balance2', 80),
-		))
-
-		print('')
-		print('# Risk balance')
-		print('• min-max: {:4.0f} | {:4.0f}'.format(
-			stats.get_min('relative_balance2'),
-			stats.get_max('relative_balance2'),
-		))
-		print('• P10-P20-P30-P50: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.get_percentil('relative_balance2', 10),
-			stats.get_percentil('relative_balance2', 20),
-			stats.get_percentil('relative_balance2', 30),
-			stats.get_percentil('relative_balance2', 50),
-			stats.get_percentil('relative_balance2', 70),
-		))
-
-		print('')
-		print('# Crypto value')
-		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.data['value'][0],
-			stats.get_max('value'),
-			stats.get_min('value'),
-			stats.data['value'][-1],
-		))
-
-		print('')
-		print('# Total value')
-		print('• OHLC: {:4.0f} | {:4.0f} | {:4.0f} | {:4.0f}'.format(
-			stats.data['total_value'][0],
-			stats.get_max('total_value'),
-			stats.get_min('total_value'),
-			stats.data['total_value'][-1],
-		))
-
-		print('')
-		print('# Profit')
-		print('• Cash balance: {:6.2f} / month | {:6.2f} / year'.format(
-			stats.data['balance2'][-1] / (stats.data['date'][-1] - stats.data['date'][0]).days * 31,
-			stats.data['balance2'][-1] / (stats.data['date'][-1] - stats.data['date'][0]).days * 365,
-		))
-		print('• Total value: {:6.2f} / month | {:6.2f} / year'.format(
-			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31,
-			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365,
-		))
-		print('• Cash relative: {:6.2f} % / month | {:6.2f} % / year'.format(
-			# profit / total_cache_invested / days_count * 31 * 100
-			(stats.data['balance2'][-1] - stats.data['balance2'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31 * 100,
-			# profit / total_cache_invested / days_count * 365 * 100
-			(stats.data['balance2'][-1] - stats.data['balance2'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365 * 100,
-		))
-		print('• Total relative: {:6.2f} % / month | {:6.2f} % / year'.format(
-			# total_value_profit / total_cache_invested / days_count * 31 * 100
-			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 31 * 100,
-			# total_value_profit / total_cache_invested / days_count * 365 * 100
-			(stats.data['total_value'][-1] - stats.data['total_value'][0]) / (stats.data['value'][0] - stats.get_min('balance2')) / (stats.data['date'][-1] - stats.data['date'][0]).days * 365 * 100,
-		))

@@ -17,5 +17,5 @@ class Multi(Logger):
 	def set_pair(self, pair):
 		[logger.set_pair(pair) for logger in self.loggers]
 
-	def log(self, message: str, bot, extra_values={}):
-		[logger.log(message, bot, extra_values) for logger in self.loggers]
+	def log(self, message: str, bot, priority=None, extra_values={}):
+		[logger.log(message, bot, priority, extra_values) for logger in self.loggers]
