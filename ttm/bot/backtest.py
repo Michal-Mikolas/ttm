@@ -44,7 +44,7 @@ class Backtest(Bot):
 		self.backtest_balances[currencies[1]] = balance2
 
 		# 4) Finish
-		self.log('Bought {:f} {:s}'.format(amount, currencies[0]))
+		self.log('Bought {:f} {:s}'.format(amount, currencies[0]), priority=2)
 
 	def sell(self, pair: str, amount: float, price: float):
 		# 1) Calculate new balances
@@ -64,7 +64,7 @@ class Backtest(Bot):
 		self.backtest_balances[currencies[1]] = balance2
 
 		# 4) Finish
-		self.log('Sold {:f} {:s}'.format(amount, currencies[0]))
+		self.log('Sold {:f} {:s}'.format(amount, currencies[0]), priority=2)
 
 	def get_balance(self, symbol):
 		if symbol not in self.backtest_balances:

@@ -23,6 +23,13 @@ class Real(Bot):
 
 	def buy(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'buy', amount, price)
+
+		currencies = self.split_pair(pair)
+		self.log(
+			'Bought {:f} {:s}'.format(amount, currencies[0]),
+			priority=2
+		)
+
 		# if self.exchange.has['createMarketOrder']:
 		# 	self.exchange.create_order(pair, 'market', 'buy', amount, price)
 		# 	# alternative? exchange: 'options': 'create_market_buy_orderRequiresPrice': false}
@@ -33,6 +40,12 @@ class Real(Bot):
 
 	def sell(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'sell', amount, price)
+
+		currencies = self.split_pair(pair)
+		self.log(
+			'Sold {:f} {:s}'.format(amount, currencies[0]),
+			priority=2
+		)
 
 	def get_balance(self, symbol):
 		try:
