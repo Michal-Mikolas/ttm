@@ -1,6 +1,7 @@
 import ccxt
 from datetime import datetime
 from ttm.strategy import Strategy
+import re
 
 """
 (This file is part of TTM package)
@@ -47,6 +48,31 @@ class SameValue(Strategy):
 
 			if self.buy(self.pair, buy_amount, ohlcv[4]):
 				self.save_target_value((balance + buy_amount) * ohlcv[4])
+
+	def command(self, chatbot, command: str, args=[]):
+		command = command.lower()
+
+		# TargetValue
+		if command in ['target', 'targetvalue', 'target-value', 'target_value']:
+			if len(args) >= 1:
+				if re.match(r'^[0-9.]+$', args[0]):
+					# Save new value
+					self.save_target_value(args[0])
+
+				else:
+					chatbot.send_message(
+						'Error: Value "`{:s}`" is not valid number.'.format(args[0])
+					)
+
+			# Send target value
+			chatbot.send_message(
+				'*Target value:* {:5.5f}'.format(self.get_target_value())
+			)
+
+		# Unsupported
+		else:
+			chatbot.send_message('Unsupported command "`{:s}`".'.format(command))
+
 
 	################################################################################
 
@@ -98,4 +124,4 @@ class SameValue(Strategy):
 		return target_value
 
 	def save_target_value(self, target_value):
-		self.bot.storage.save('target_value', target_value)
+		self.bot.storage.save('target_value', float(target_value))

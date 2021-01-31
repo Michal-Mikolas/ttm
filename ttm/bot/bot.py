@@ -34,7 +34,7 @@ class Bot():
 	def get_balance(self, symbol):
 		pass
 
-	def get_ohlcvs(self, pair, timeframe=None, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair=None, timeframe=None, from_datetime=None, till_datetime=None):
 		pass
 
 	def run(self):
@@ -91,11 +91,18 @@ class Bot():
 				self.cache.save(cache_key, all_ohlcvs)
 
 		# Finish
+		self.temp['last_pair'] = pair
 		self.temp['last_timeframe'] = timeframe
 
 		return all_ohlcvs
 
-	def _get_last_timeframe(self):
+	def get_last_pair(self):
+		if 'last_pair' not in self.temp:
+			return None
+
+		return self.temp['last_pair']
+
+	def get_last_timeframe(self):
 		if 'last_timeframe' not in self.temp:
 			return None
 

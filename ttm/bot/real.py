@@ -21,6 +21,13 @@ class Real(Bot):
 	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger):
 		super().__init__(exchange, strategy, storage, cache, logger)
 
+		self.chatbot = None
+		self.status = 'active'
+
+	def set_chatbot(self, chatbot):
+		self.chatbot = chatbot
+		self.chatbot.set_bot(self)
+
 	def buy(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'buy', amount, price)
 
@@ -48,19 +55,25 @@ class Real(Bot):
 		)
 
 	def get_balance(self, symbol):
+		# Fetch data from exchange
 		try:
 			balances = self.exchange.fetch_free_balance()
 		except:
 			balances = {}
 
+		# Return
 		if symbol in balances:
 			return balances[symbol]
 		else:
 			return 0.0
 
-	def get_ohlcvs(self, pair, timeframe: str = None, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair: str = None, timeframe: str = None, from_datetime=None, till_datetime=None):
 		# Prepare
-		timeframe = timeframe if timeframe else self._get_last_timeframe()
+		pair = pair if pair else self.get_last_pair()
+		if not pair:
+			return None
+
+		timeframe = timeframe if timeframe else self.get_last_timeframe()
 		if not timeframe:
 			return None
 
@@ -75,12 +88,14 @@ class Real(Bot):
 
 	def run(self):
 		self.log('Starting bot...', priority=1)
+		self.chatbot.start() if self.chatbot else None
 		self.strategy.start()
 
 		while True:
 			try:
-				self.log('tick...', priority=0)
-				self.strategy.tick()
+				if self.status == 'active':
+					self.log('tick...', priority=0)
+					self.strategy.tick()
 
 			except (ccxt.RequestTimeout, ccxt.NetworkError):
 				self.log('network error...', priority=0, extra_values=False)

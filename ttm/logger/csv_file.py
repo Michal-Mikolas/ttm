@@ -35,11 +35,11 @@ class CSVFile(Logger):
 			writer = csv.writer(file)
 
 			# Write header?
-			if self.columns < len(values):
+			if len(values) > self.columns:
 				writer.writerow(values.keys())
 
 			# Write data
 			writer.writerow(values.values())
 
 		# Finish
-		self.columns = len(values)
+		self.columns = max(self.columns, len(values))

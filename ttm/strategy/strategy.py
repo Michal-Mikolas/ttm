@@ -27,3 +27,6 @@ class Strategy(object):
 
 	def finish(self):
 		pass
+
+	def command(chatbot, command: str, args = []):
+		pass

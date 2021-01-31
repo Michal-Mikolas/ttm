@@ -72,9 +72,13 @@ class Backtest(Bot):
 
 		return self.backtest_balances[symbol]
 
-	def get_ohlcvs(self, pair: str, timeframe: str = None, from_datetime=None, till_datetime=None):
+	def get_ohlcvs(self, pair: str = None, timeframe: str = None, from_datetime=None, till_datetime=None):
 		# Prepare
-		timeframe = timeframe if timeframe else self._get_last_timeframe()
+		pair = pair if pair else self.get_last_pair()
+		if not pair:
+			return None
+
+		timeframe = timeframe if timeframe else self.get_last_timeframe()
 		if not timeframe:
 			return None
 
