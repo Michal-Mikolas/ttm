@@ -1,5 +1,6 @@
 import telepot
 from telepot.loop import MessageLoop
+from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 from ttm.chatbot import Chatbot
 import re
 import shlex
@@ -21,12 +22,18 @@ class Telegram(Chatbot):
 		self.root_folder = root_folder
 
 		self.chat_id = None
+		self.msg_history = {}
 
 	def start(self):
 		MessageLoop(self.telegram, self.on_message).run_as_thread()
 
 	def send_message(self, message):
-		self.telegram.sendMessage(self.chat_id, message, parse_mode='markdown')
+		self.telegram.sendMessage(
+			self.chat_id,
+			message,
+			parse_mode='markdown',
+			reply_markup=self.get_history_keyboard()
+		)
 
 	def on_message(self, msg):
 		# Check
@@ -36,6 +43,8 @@ class Telegram(Chatbot):
 		# Prepare
 		content_type, chat_type, self.chat_id = telepot.glance(msg)
 		args = self.fetch_args(msg['text'])
+
+		self.history(msg['text'])
 
 		# Call command
 		if args[0] == 'status':
@@ -59,6 +68,48 @@ class Telegram(Chatbot):
 		args[0] = args[0].lower()
 
 		return args
+
+	#     #
+	#     # #  ####  #####  ####  #####  #   #
+	#     # # #        #   #    # #    #  # #
+	####### #  ####    #   #    # #    #   #
+	#     # #      #   #   #    # #####    #
+	#     # # #    #   #   #    # #   #    #
+	#     # #  ####    #    ####  #    #   #
+
+	def history(self, msg:str = None):
+		# Prepare
+		if self.chat_id not in self.msg_history:
+			self.msg_history[self.chat_id] = []
+
+		# Save last msg
+		if msg and not re.match(r'/?login', msg.lower()):
+			# remove msg if already in history
+			self.msg_history[self.chat_id] = [v for v in self.msg_history[self.chat_id] if v != msg]
+			# append it to the end
+			self.msg_history[self.chat_id].append(msg)
+			# keep only last 4 msgs
+			self.msg_history[self.chat_id] = self.msg_history[self.chat_id][-4:]
+
+		# Return history
+		return self.msg_history[self.chat_id]
+
+	def get_history_keyboard(self):
+		rows = []
+		for msg in reversed(self.history()):
+			rows.append([KeyboardButton(text=msg)])
+
+		return ReplyKeyboardMarkup(
+			keyboard=rows
+		)
+
+	 #####
+	#     #  ####  #    # #    #   ##   #    # #####   ####
+	#       #    # ##  ## ##  ##  #  #  ##   # #    # #
+	#       #    # # ## # # ## # #    # # #  # #    #  ####
+	#       #    # #    # #    # ###### #  # # #    #      #
+	#     # #    # #    # #    # #    # #   ## #    # #    #
+	 #####   ####  #    # #    # #    # #    # #####   ####
 
 	def command_status(self, args = []):
 		#
@@ -111,7 +162,12 @@ class Telegram(Chatbot):
 		#
 		# Send data
 		#
-		self.telegram.sendMessage(self.chat_id, output, parse_mode='html')
+		self.telegram.sendMessage(
+			self.chat_id,
+			output,
+			parse_mode='html',
+			reply_markup=self.get_history_keyboard()
+		)
 
 	def command_file(self, args):
 		# Prepare
@@ -146,8 +202,7 @@ class Telegram(Chatbot):
 		self.bot.strategy.command(self, args[0], args[1:])
 
 	def command_start(self):
-		self.telegram.sendMessage(
-			self.chat_id,
+		self.send_message(
 			'Hello from TTM Trading Bot! \n'
 			+ '\n'
 			+ 'You can use following commands: \n'
