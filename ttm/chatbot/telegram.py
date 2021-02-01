@@ -22,6 +22,7 @@ class Telegram(Chatbot):
 		self.root_folder = root_folder
 
 		self.chat_id = None
+		self.sessions = {}
 		self.msg_history = {}
 
 	def start(self):
@@ -36,18 +37,36 @@ class Telegram(Chatbot):
 		)
 
 	def on_message(self, msg):
-		# Check
+		#
+		# Check & Prepare
+		#
+
+		# args
 		if 'text' not in msg:
 			return
-
-		# Prepare
-		content_type, chat_type, self.chat_id = telepot.glance(msg)
 		args = self.fetch_args(msg['text'])
 
+		content_type, chat_type, self.chat_id = telepot.glance(msg)
+
+		# Security
+		if args[0] not in ['start', 'login', 'hello', 'hi']:
+			is_logged_in = self.handle_security()
+			if not is_logged_in:
+				return
+
+		# Command history
 		self.history(msg['text'])
 
+		#
 		# Call command
-		if args[0] == 'status':
+		#
+		if args[0] == 'login':
+			self.command_login(args[1:])
+
+		elif args[0] == 'logout':
+			self.command_logout(args[1:])
+
+		elif args[0] == 'status':
 			self.command_status(args[1:])
 
 		elif args[0] == 'how':
@@ -68,6 +87,22 @@ class Telegram(Chatbot):
 		args[0] = args[0].lower()
 
 		return args
+
+	def handle_security(self):
+		# Check
+		is_logged_in = False
+		try:
+			if self.sessions[self.chat_id]['password'] == self.password:
+				is_logged_in = True
+		except KeyError:
+			pass
+
+		# Alert
+		if not is_logged_in:
+			self.send_message('You are not logged in. Please use following command to login: \n\n/login password')
+
+		# Return
+		return is_logged_in
 
 	#     #
 	#     # #  ####  #####  ####  #####  #   #
@@ -110,6 +145,30 @@ class Telegram(Chatbot):
 	#       #    # #    # #    # ###### #  # # #    #      #
 	#     # #    # #    # #    # #    # #   ## #    # #    #
 	 #####   ####  #    # #    # #    # #    # #####   ####
+
+	def command_login(self, args):
+		# Prepare
+		if len(args) == 0:
+			self.send_message('ERROR: No password was specified.')
+			return
+
+		# Login
+		if args[0] == self.password:
+			if self.chat_id not in self.sessions:
+				self.sessions[self.chat_id] = {}
+
+			self.sessions[self.chat_id]['password'] = args[0]
+			self.send_message('*Yes sir!*')
+
+		else:
+			self.send_message('ERROR: Password is not correct.')
+
+	def command_logout(self, args):
+		if self.chat_id in self.sessions:
+			self.sessions[self.chat_id] = {}
+
+		self.send_message('You have been sucessfully logged out.')
+		self.send_message('*Bye sir.*')
 
 	def command_status(self, args = []):
 		#
@@ -207,6 +266,7 @@ class Telegram(Chatbot):
 			+ '\n'
 			+ 'You can use following commands: \n'
 			+ '/login password \n'
+			+ '/logout \n'
 			+ '/status [active/paused/-] \n'
 			+ '/file filename \n'
 			+ '/strategy command [arg1, [arg2, [...]]] \n'
