@@ -1,7 +1,7 @@
 import telepot
 from telepot.loop import MessageLoop
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
-from ttm.chatbot import Chatbot
+from ttm.logger import Logger
 import re
 import shlex
 
@@ -12,20 +12,20 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
-class Telegram(Chatbot):
+class Telegram(Logger):
 
-	def __init__(self, token: str, password: str, root_folder = ''):
+	def __init__(self, token: str, password: str, root_folder = '', min_priority=2):
 		super().__init__()
 
 		self.telegram = telepot.Bot(token)
 		self.password = password
 		self.root_folder = root_folder
+		self.min_priority = min_priority
 
+		self.bot = None
 		self.chat_id = None
 		self.sessions = {}
-		self.msg_history = {}
 
-	def start(self):
 		MessageLoop(self.telegram, self.on_message).run_as_thread()
 
 	def send_message(self, message):
@@ -89,13 +89,13 @@ class Telegram(Chatbot):
 		return args
 
 	def handle_security(self):
+		# Prepare
+		self.prepare_session()
+
 		# Check
 		is_logged_in = False
-		try:
-			if self.sessions[self.chat_id]['password'] == self.password:
-				is_logged_in = True
-		except KeyError:
-			pass
+		if self.sessions[self.chat_id]['password'] == self.password:
+			is_logged_in = True
 
 		# Alert
 		if not is_logged_in:
@@ -103,6 +103,36 @@ class Telegram(Chatbot):
 
 		# Return
 		return is_logged_in
+
+	def prepare_session(self):
+		if self.chat_id not in self.sessions:
+			self.sessions[self.chat_id] = {
+				'password': None,
+				'msg_history': []
+			}
+
+		return self.sessions[self.chat_id]
+
+	#     #
+	##    #  ####  ##### # ###### #  ####    ##   ##### #  ####  #    #  ####
+	# #   # #    #   #   # #      # #    #  #  #    #   # #    # ##   # #
+	#  #  # #    #   #   # #####  # #      #    #   #   # #    # # #  #  ####
+	#   # # #    #   #   # #      # #      ######   #   # #    # #  # #      #
+	#    ## #    #   #   # #      # #    # #    #   #   # #    # #   ## #    #
+	#     #  ####    #   # #      #  ####  #    #   #   #  ####  #    #  ####
+
+	def log(self, message: str, bot, priority = 2, extra_values = {}):
+		# Prepare
+		if not self.bot:
+			self.bot = bot
+
+		if priority < self.min_priority:
+			return
+
+		for chat_id in self.sessions:
+			# Send logs to logged in people only
+			if self.sessions[chat_id]['password'] == self.password:
+				self.send_status(message)
 
 	#     #
 	#     # #  ####  #####  ####  #####  #   #
@@ -114,20 +144,19 @@ class Telegram(Chatbot):
 
 	def history(self, msg:str = None):
 		# Prepare
-		if self.chat_id not in self.msg_history:
-			self.msg_history[self.chat_id] = []
+		session = self.prepare_session()
 
 		# Save last msg
-		if msg and not re.match(r'/?login', msg.lower()):
+		if msg and not re.match(r'/?log((in)|(out))', msg.lower()):
 			# remove msg if already in history
-			self.msg_history[self.chat_id] = [v for v in self.msg_history[self.chat_id] if v != msg]
+			session['msg_history'] = [v for v in session['msg_history'] if v != msg]
 			# append it to the end
-			self.msg_history[self.chat_id].append(msg)
+			session['msg_history'].append(msg)
 			# keep only last 4 msgs
-			self.msg_history[self.chat_id] = self.msg_history[self.chat_id][-4:]
+			session['msg_history'] = session['msg_history'][-4:]
 
 		# Return history
-		return self.msg_history[self.chat_id]
+		return session['msg_history']
 
 	def get_history_keyboard(self):
 		rows = []
@@ -148,15 +177,14 @@ class Telegram(Chatbot):
 
 	def command_login(self, args):
 		# Prepare
+		self.prepare_session()
+
 		if len(args) == 0:
 			self.send_message('ERROR: No password was specified.')
 			return
 
 		# Login
 		if args[0] == self.password:
-			if self.chat_id not in self.sessions:
-				self.sessions[self.chat_id] = {}
-
 			self.sessions[self.chat_id]['password'] = args[0]
 			self.send_message('*Yes sir!*')
 
@@ -165,15 +193,13 @@ class Telegram(Chatbot):
 
 	def command_logout(self, args):
 		if self.chat_id in self.sessions:
-			self.sessions[self.chat_id] = {}
+			self.sessions[self.chat_id]['password'] = None
 
 		self.send_message('You have been sucessfully logged out.')
 		self.send_message('*Bye sir.*')
 
 	def command_status(self, args = []):
-		#
 		# Set new value?
-		#
 		if len(args) >= 1:
 			self.bot.log(
 				'Setting status="{:s}" ...'.format(args[0]),
@@ -181,6 +207,10 @@ class Telegram(Chatbot):
 			)
 			self.bot.status = args[0]
 
+		# Send current status
+		self.send_status()
+
+	def send_status(self, extra_message: str = None):
 		#
 		# Prepare status data
 		#
@@ -191,6 +221,10 @@ class Telegram(Chatbot):
 		currency1, currency2 = None, None
 		if pair:
 			currency1, currency2 = self.bot.split_pair(pair)
+
+		# Message
+		if extra_message:
+			output += str(extra_message) + '\n\n'
 
 		# Status
 		output += 'Status:      {:s} \n'.format(self.bot.status)
@@ -271,3 +305,4 @@ class Telegram(Chatbot):
 			+ '/file filename \n'
 			+ '/strategy command [arg1, [arg2, [...]]] \n'
 		)
+

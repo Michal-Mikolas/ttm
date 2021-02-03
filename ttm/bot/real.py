@@ -88,7 +88,6 @@ class Real(Bot):
 
 	def run(self):
 		self.log('Starting bot...', priority=1)
-		self.chatbot.start() if self.chatbot else None
 		self.strategy.start()
 
 		while True:
@@ -101,6 +100,10 @@ class Real(Bot):
 				self.log('network error...', priority=0, extra_values=False)
 
 			finally:
+				self.log(
+					'waiting {:d} seconds...'.format(self.strategy.tick_period),
+					priority=0
+				)
 				time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
