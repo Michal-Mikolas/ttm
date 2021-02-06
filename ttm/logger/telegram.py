@@ -29,12 +29,15 @@ class Telegram(Logger):
 		MessageLoop(self.telegram, self.on_message).run_as_thread()
 
 	def send_message(self, message):
-		self.telegram.sendMessage(
-			self.chat_id,
-			message,
-			parse_mode='markdown',
-			reply_markup=self.get_history_keyboard()
-		)
+		try:
+			self.telegram.sendMessage(
+				self.chat_id,
+				message,
+				parse_mode='markdown',
+				reply_markup=self.get_history_keyboard()
+			)
+		except telepot.exception.WaitTooLong:
+			pass  # network error, can't do anything about that
 
 	def on_message(self, msg):
 		#
@@ -255,12 +258,15 @@ class Telegram(Logger):
 		#
 		# Send data
 		#
-		self.telegram.sendMessage(
-			self.chat_id,
-			output,
-			parse_mode='html',
-			reply_markup=self.get_history_keyboard()
-		)
+		try:
+			self.telegram.sendMessage(
+				self.chat_id,
+				output,
+				parse_mode='html',
+				reply_markup=self.get_history_keyboard()
+			)
+		except telepot.exception.WaitTooLong:
+			pass  # network error, can't do anything about that
 
 	def command_file(self, args):
 		# Prepare

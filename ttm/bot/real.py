@@ -102,7 +102,8 @@ class Real(Bot):
 			finally:
 				self.log(
 					'waiting {:d} seconds...'.format(self.strategy.tick_period),
-					priority=0
+					priority=0,
+					extra_values=False
 				)
 				time.sleep(self.strategy.tick_period)
 
