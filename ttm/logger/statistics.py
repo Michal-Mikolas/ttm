@@ -53,8 +53,8 @@ class Statistics(Logger):
 	def __del__(self):
 		self.print_summary()
 
-		# if self.export_results:
-		# 	self.save_export_results()
+		if self.export_results:
+			self.save_export_results()
 
 	def print_summary(self):
 		print('')
@@ -173,42 +173,34 @@ class Statistics(Logger):
 
 		print('')
 		headers = [
-			'# PROFIT',
-			'Amount / Month',
-			'Amount / Year',
-			'% / Month',
-			'% / Year',
+			'# CHANGE',
+			'Change / Month',
+			'Change / Year',
 		]
 
 		months = (self.data['date'][-1] - self.data['date'][0]).days / 31
 		years = (self.data['date'][-1] - self.data['date'][0]).days / 365
-		total_cache_invested = self.data['value1'][0] - self.get_min('balance2')  # initial crypto buy - not user cash
 
 		table = [
+			[
+				'Price',
+				(self.data['price'][-1] - self.data['price'][0]) / months,
+				(self.data['price'][-1] - self.data['price'][0]) / years,
+			],
+			[
+				'Cash balance',
+				(self.data['balance2'][-1] - self.data['balance2'][0]) / months,
+				(self.data['balance2'][-1] - self.data['balance2'][0]) / years,
+			],
+			[
+				'Crypto value',
+				(self.data['value1'][-1] - self.data['value1'][0]) / months,
+				(self.data['value1'][-1] - self.data['value1'][0]) / years,
+			],
 			[
 				'Total value',
 				(self.data['total_value'][-1] - self.data['total_value'][0]) / months,
 				(self.data['total_value'][-1] - self.data['total_value'][0]) / years,
-				# total_value_profit / total_cache_invested / days_count * 31 * 100
-				(self.data['total_value'][-1] - self.data['total_value'][0]) / total_cache_invested / months * 100,
-				# total_value_profit / total_cache_invested / days_count * 365 * 100
-				(self.data['total_value'][-1] - self.data['total_value'][0]) / total_cache_invested / years * 100,
-			],
-			[
-				'Cash',
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / months,
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / years,
-				# profit / total_cache_invested / days_count * 31 * 100
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / total_cache_invested / months * 100,
-				# profit / total_cache_invested / days_count * 365 * 100
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / total_cache_invested / years * 100,
-			],
-			[
-				'(Price)',
-				(self.data['price'][-1] - self.data['price'][0]) / months,
-				(self.data['price'][-1] - self.data['price'][0]) / years,
-				(self.data['price'][-1] - self.data['price'][0]) / self.data['price'][0] / months * 100,
-				(self.data['price'][-1] - self.data['price'][0]) / self.data['price'][0] / years * 100,
 			],
 		]
 		print(tabulate(table, headers=headers))
@@ -227,13 +219,11 @@ class Statistics(Logger):
 			writer = csv.writer(file)
 
 			# Prepare headers
-			headers = ['', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Profit / Month', 'Profit / Year', 'Profit % / Month', 'Profit % / Year']
-
-			if 'extra_values' in self.export_results:
-				headers.update(self.export_results['extra_values'].keys())
+			headers = ['Name', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Change / Month', 'Change / Year', 'Strategy', 'Exchange', 'From', 'Till', 'Note']
 
 			# Write to file
-			writer.writerow(headers)
+			if not os.path.exists(self.export_results['file']):
+				writer.writerow(headers)
 
 
 	 #####

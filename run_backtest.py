@@ -34,15 +34,7 @@ logger = ttm.logger.Multi(
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 	ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 		'file': 'output/results.csv',
-		'extra_values': {
-			'minimal_move': 5.0,
-			'sell_modifier': 1.0,
-			'buy_modifier': 1.0,
-			# 'strategy': 'SameValue',
-			# 'exchange': 'Bittrex',
-			# 'from': '2018-06-01',
-			# 'till': '2020-04-24',
-		},
+		'note': 'minimal_move=5.0, sell_modifier=0.97, buy_modifier=1.03, initial_target_value=100',
 	}),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )

@@ -33,7 +33,7 @@ class Logger():
 				balance2 = bot.get_balance(currency2)
 
 				# Relative balance
-				last_balance2 = bot.storage.get('logger_last_balance2') or 0.0
+				last_balance2 = bot.storage.get('logger_last_balance2') or balance2
 				balance2_change = balance2 - last_balance2
 				last_relative_balance2 = bot.storage.get('logger_last_relative_balance2') or 0.0
 				relative_balance2 = last_relative_balance2 + balance2_change

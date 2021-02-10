@@ -54,9 +54,9 @@ class SameValue(Strategy):
 
 		# TargetValue
 		if command in ['target', 'targetvalue', 'target-value', 'target_value']:
+			# Save new value
 			if len(args) >= 1:
 				if re.match(r'^[0-9.]+$', args[0]):
-					# Save new value
 					self.save_target_value(args[0])
 
 				else:
@@ -64,7 +64,7 @@ class SameValue(Strategy):
 						'Error: Value "`{:s}`" is not valid number.'.format(args[0])
 					)
 
-			# Send target value
+			# Send current value
 			chatbot.send_message(
 				'*Target value:* {:5.5f}'.format(self.get_target_value())
 			)
