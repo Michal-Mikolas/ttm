@@ -1,6 +1,6 @@
 pip3 install ccxt
 pip3 install keyring
-pip3 install dateutil
+pip3 install python-dateutil
 pip3 install yagmail
 pip3 install tabulate
 pip3 install telepot

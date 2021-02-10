@@ -32,7 +32,18 @@ cache = ttm.storage.JSONFile('cache.json')                     # storage for per
 logger = ttm.logger.Multi(
 	ttm.logger.Console(min_priority=1),
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
-	ttm.logger.Statistics(storage, data_folder, min_priority=0),
+	ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
+		'file': 'output/results.csv',
+		'extra_values': {
+			'minimal_move': 5.0,
+			'sell_modifier': 1.0,
+			'buy_modifier': 1.0,
+			# 'strategy': 'SameValue',
+			# 'exchange': 'Bittrex',
+			# 'from': '2018-06-01',
+			# 'till': '2020-04-24',
+		},
+	}),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
 logger.set_pair('BTC/USD')
@@ -41,7 +52,7 @@ logger.set_pair('BTC/USD')
 # 7.5k-7.5k:  '2018-06-01', '2020-04-24'
 # 7.5k-24.5k: '2020-04-24', '2020-12-26'
 bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
-	'BTC': 0.013227,
+	'BTC': 0.0,
 	'USD': 0.0,
 })
 

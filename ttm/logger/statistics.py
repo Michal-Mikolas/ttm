@@ -1,6 +1,9 @@
 from ttm.logger import Logger
 from pathlib import Path
 from tabulate import tabulate
+import os
+from pathlib import Path
+import csv
 
 """
 (This file is part of TTM package)
@@ -11,11 +14,12 @@ TTM - ToTheMoon crypto trading bot
 """
 class Statistics(Logger):
 
-	def __init__(self, storage, output_folder = None, min_priority = 0):
+	def __init__(self, storage, output_folder = None, min_priority = 0, export_results = None):
 		self.data = {}  # TODO change to storage
 		self.storage = storage
 		self.output_folder = output_folder
 		self.min_priority = min_priority
+		self.export_results = export_results
 
 		# Prepare directory
 		Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -38,7 +42,21 @@ class Statistics(Logger):
 		self.add('value1', values['value1'])
 		self.add('total_value', values['total_value'])
 
+	 #####
+	#     # #    # #    # #    #   ##   #####  #   #
+	#       #    # ##  ## ##  ##  #  #  #    #  # #
+	 #####  #    # # ## # # ## # #    # #    #   #
+	      # #    # #    # #    # ###### #####    #
+	#     # #    # #    # #    # #    # #   #    #
+	 #####   ####  #    # #    # #    # #    #   #
+
 	def __del__(self):
+		self.print_summary()
+
+		# if self.export_results:
+		# 	self.save_export_results()
+
+	def print_summary(self):
 		print('')
 
 		print('')
@@ -194,6 +212,29 @@ class Statistics(Logger):
 			],
 		]
 		print(tabulate(table, headers=headers))
+
+	def save_export_results(self):
+		#
+		# Prepare csv file?
+		#
+
+		# Prepare directory
+		directory = os.path.dirname(self.export_results['file'])
+		Path(directory).mkdir(parents=True, exist_ok=True)
+
+		# Prepare csv file
+		with open(self.export_results['file'], 'a', newline='', encoding='utf8') as file:
+			writer = csv.writer(file)
+
+			# Prepare headers
+			headers = ['', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Profit / Month', 'Profit / Year', 'Profit % / Month', 'Profit % / Year']
+
+			if 'extra_values' in self.export_results:
+				headers.update(self.export_results['extra_values'].keys())
+
+			# Write to file
+			writer.writerow(headers)
+
 
 	 #####
 	#     # #####   ##   ##### #  ####  ##### #  ####   ####

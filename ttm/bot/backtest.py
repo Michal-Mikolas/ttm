@@ -27,17 +27,16 @@ class Backtest(Bot):
 		self.backtest_balances = initial_balances
 
 	def buy(self, pair: str, amount: float, price: float):
-		# 1) Calculate new balances
+		# 1) Calculate fees
+		fee = self._calculate_fee(pair, 'limit', 'buy', amount, price)['cost']
+
+		# 2) Calculate new balances
 		currencies = self.split_pair(pair)
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
 
-		balance1 += amount
+		balance1 += (amount * price - fee) / price  # we buy a little less crypto because of fee
 		balance2 -= amount * price
-
-		# 2) Calculate fees
-		fee = self._calculate_fee(pair, 'limit', 'buy', amount, price)
-		balance2 -= fee['cost']
 
 		# 3) Save new balances
 		self.backtest_balances[currencies[0]] = balance1
@@ -47,17 +46,16 @@ class Backtest(Bot):
 		self.log('Bought {:f} {:s}'.format(amount, currencies[0]), priority=2)
 
 	def sell(self, pair: str, amount: float, price: float):
-		# 1) Calculate new balances
+		# 1) Calculate fees
+		fee = self._calculate_fee(pair, 'limit', 'sell', amount, price)['cost']
+
+		# 2) Calculate new balances
 		currencies = self.split_pair(pair)
 		balance1 = self.get_balance(currencies[0])
 		balance2 = self.get_balance(currencies[1])
 
 		balance1 -= amount
-		balance2 += amount * price
-
-		# 2) Calculate fees
-		fee = self._calculate_fee(pair, 'limit', 'sell', amount, price)
-		balance2 -= fee['cost']
+		balance2 += amount * price - fee
 
 		# 3) Save new balances
 		self.backtest_balances[currencies[0]] = balance1
