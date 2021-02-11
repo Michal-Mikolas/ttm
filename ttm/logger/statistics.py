@@ -21,11 +21,16 @@ class Statistics(Logger):
 		self.min_priority = min_priority
 		self.export_results = export_results
 
+		self.bot = None
+
 		# Prepare directory
 		Path(output_folder).mkdir(parents=True, exist_ok=True)
 
 	def log(self, message: str, bot, priority = 2, extra_values = {}):
 		# Prepare
+		if not self.bot:
+			self.bot = bot
+
 		if priority < self.min_priority:
 			return
 
@@ -56,9 +61,21 @@ class Statistics(Logger):
 		if self.export_results:
 			self.save_export_results()
 
+	def get_metrics(self):
+		return {
+			'price': 'Price',
+			'balance2': 'Cash balance',
+			'relative_balance2': 'Risk cash balance',
+			'value1': 'Crypto value',
+			'total_value': 'Total value',
+		}
+
 	def print_summary(self):
 		print('')
 
+		#
+		# OHLC
+		#
 		print('')
 		headers = [
 			'# OHLC',
@@ -67,45 +84,20 @@ class Statistics(Logger):
 			'Low',
 			'Close',
 		]
-		table = [
-			[
-				'Price',
-				self.data['price'][0],
-				self.get_max('price'),
-				self.get_min('price'),
-				self.data['price'][-1],
-			],
-			[
-				'Cash balance',
-				self.data['balance2'][0],
-				self.get_max('balance2'),
-				self.get_min('balance2'),
-				self.data['balance2'][-1],
-			],
-			[
-				'Risk cash balance',
-				self.data['relative_balance2'][0],
-				self.get_max('relative_balance2'),
-				self.get_min('relative_balance2'),
-				self.data['relative_balance2'][-1],
-			],
-			[
-				'Crypto value',
-				self.data['value1'][0],
-				self.get_max('value1'),
-				self.get_min('value1'),
-				self.data['value1'][-1],
-			],
-			[
-				'Total value',
-				self.data['total_value'][0],
-				self.get_max('total_value'),
-				self.get_min('total_value'),
-				self.data['total_value'][-1],
-			],
-		]
+		table = []
+		for key, name in self.get_metrics().items():
+			table.append(			[
+				name,
+				self.data[key][0],
+				self.get_max(key),
+				self.get_min(key),
+				self.data[key][-1],
+			])
 		print(tabulate(table, headers=headers))
 
+		#
+		# Percentil
+		#
 		print('')
 		headers = [
 			'# PERCENTIL',
@@ -117,92 +109,44 @@ class Statistics(Logger):
 			'80p',
 			'90p',
 		]
-		table = [
-			[
-				'Price',
-				self.get_percentil('price', 10),
-				self.get_percentil('price', 20),
-				self.get_percentil('price', 30),
-				self.get_percentil('price', 50),
-				self.get_percentil('price', 70),
-				self.get_percentil('price', 80),
-				self.get_percentil('price', 90),
-			],
-			[
-				'Cash balance',
-				self.get_percentil('balance2', 10),
-				self.get_percentil('balance2', 20),
-				self.get_percentil('balance2', 30),
-				self.get_percentil('balance2', 50),
-				self.get_percentil('balance2', 70),
-				self.get_percentil('balance2', 80),
-				self.get_percentil('balance2', 90),
-			],
-			[
-				'Risk cash balance',
-				self.get_percentil('relative_balance2', 10),
-				self.get_percentil('relative_balance2', 20),
-				self.get_percentil('relative_balance2', 30),
-				self.get_percentil('relative_balance2', 50),
-				self.get_percentil('relative_balance2', 70),
-				self.get_percentil('relative_balance2', 80),
-				self.get_percentil('relative_balance2', 90),
-			],
-			[
-				'Crypto value',
-				self.get_percentil('value1', 10),
-				self.get_percentil('value1', 20),
-				self.get_percentil('value1', 30),
-				self.get_percentil('value1', 50),
-				self.get_percentil('value1', 70),
-				self.get_percentil('value1', 80),
-				self.get_percentil('value1', 90),
-			],
-			[
-				'Total value',
-				self.get_percentil('total_value', 10),
-				self.get_percentil('total_value', 20),
-				self.get_percentil('total_value', 30),
-				self.get_percentil('total_value', 50),
-				self.get_percentil('total_value', 70),
-				self.get_percentil('total_value', 80),
-				self.get_percentil('total_value', 90),
-			],
-		]
+		table = []
+		for key, name in self.get_metrics().items():
+			table.append(			[
+				name,
+				self.get_percentil(key, 10),
+				self.get_percentil(key, 20),
+				self.get_percentil(key, 30),
+				self.get_percentil(key, 50),
+				self.get_percentil(key, 70),
+				self.get_percentil(key, 80),
+				self.get_percentil(key, 90),
+			])
 		print(tabulate(table, headers=headers))
 
+		#
+		# Change
+		#
 		print('')
 		headers = [
 			'# CHANGE',
-			'Change / Month',
-			'Change / Year',
+			'Total / Month',
+			'Total / Year',
+			'% / Month',
+			'% / Year',
 		]
 
 		months = (self.data['date'][-1] - self.data['date'][0]).days / 31
 		years = (self.data['date'][-1] - self.data['date'][0]).days / 365
 
-		table = [
-			[
-				'Price',
-				(self.data['price'][-1] - self.data['price'][0]) / months,
-				(self.data['price'][-1] - self.data['price'][0]) / years,
-			],
-			[
-				'Cash balance',
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / months,
-				(self.data['balance2'][-1] - self.data['balance2'][0]) / years,
-			],
-			[
-				'Crypto value',
-				(self.data['value1'][-1] - self.data['value1'][0]) / months,
-				(self.data['value1'][-1] - self.data['value1'][0]) / years,
-			],
-			[
-				'Total value',
-				(self.data['total_value'][-1] - self.data['total_value'][0]) / months,
-				(self.data['total_value'][-1] - self.data['total_value'][0]) / years,
-			],
-		]
+		table = []
+		for key, name in self.get_metrics().items():
+			table.append(			[
+				name,
+				(self.data[key][-1] - self.data[key][0]) / months,
+				(self.data[key][-1] - self.data[key][0]) / years,
+				(self.data[key][-1] - self.data[key][0]) / months / (self.data[key][-1] - self.get_min(key)) * 100,
+				(self.data[key][-1] - self.data[key][0]) / years / (self.data[key][-1] - self.get_min(key)) * 100,
+			])
 		print(tabulate(table, headers=headers))
 
 	def save_export_results(self):
@@ -215,16 +159,73 @@ class Statistics(Logger):
 		Path(directory).mkdir(parents=True, exist_ok=True)
 
 		# Prepare csv file
+		if not os.path.exists(self.export_results['file']):
+			with open(self.export_results['file'], 'w', newline='', encoding='utf8') as file:
+				writer = csv.writer(file)
+
+				# Prepare headers
+				headers = ['Name', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Change / Month', 'Change / Year', '% / Month', '% / Year', 'Strategy', 'Exchange', 'From', 'To', 'Note']
+
+				writer.writerow(headers)
+
+		# Write data
 		with open(self.export_results['file'], 'a', newline='', encoding='utf8') as file:
 			writer = csv.writer(file)
 
-			# Prepare headers
-			headers = ['Name', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Change / Month', 'Change / Year', 'Strategy', 'Exchange', 'From', 'Till', 'Note']
+			months = (self.data['date'][-1] - self.data['date'][0]).days / 31
+			years = (self.data['date'][-1] - self.data['date'][0]).days / 365
 
 			# Write to file
-			if not os.path.exists(self.export_results['file']):
-				writer.writerow(headers)
+			for key, name in self.get_metrics().items():
+				writer.writerow([
+					name,
+					self.data[key][0],
+					self.get_max(key),
+					self.get_min(key),
+					self.data[key][-1],
+					self.get_percentil(key, 10),
+					self.get_percentil(key, 20),
+					self.get_percentil(key, 30),
+					self.get_percentil(key, 50),
+					self.get_percentil(key, 70),
+					self.get_percentil(key, 80),
+					self.get_percentil(key, 90),
+					(self.data[key][-1] - self.data[key][0]) / months,
+					(self.data[key][-1] - self.data[key][0]) / years,
+					(self.data[key][-1] - self.data[key][0]) / months / (self.data[key][-1] - self.get_min(key)) * 100,
+					(self.data[key][-1] - self.data[key][0]) / years / (self.data[key][-1] - self.get_min(key)) * 100,
+					type(self.bot.strategy).__name__,
+					type(self.bot.exchange).__name__,
+					self.get_results_date_from(),
+					self.get_results_date_to(),
+					self.export_results['note'],
+				])
 
+		self.clean_file(self.export_results['file'])
+
+	def get_results_date_from(self):
+		try:
+			return self.bot.backtest_from
+		except:
+			pass
+
+	def get_results_date_to(self):
+		try:
+			return self.bot.backtest_to
+		except:
+			pass
+
+	def clean_file(self, file_path):
+		#
+		# Remove duplicated lines
+		#
+		unique_lines = []
+		for line in open(file_path, "r"):
+			if line not in unique_lines:  # check if line is not duplicate
+				unique_lines.append(line)
+
+		with open(file_path, "w") as output_file:
+			output_file.write("".join(unique_lines))
 
 	 #####
 	#     # #####   ##   ##### #  ####  ##### #  ####   ####
