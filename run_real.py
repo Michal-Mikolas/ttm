@@ -12,7 +12,7 @@ exchange = ccxt.bittrex({
 	'apiKey': keyring.get_password('bittrex', 'apiKey'),
     'secret': keyring.get_password('bittrex', 'secret'),
 })
-strategy = ttm.strategy.SameValue(
+strategy = ttm.strategy.DCA(
 	pair='BTC/EUR',
 	initial_target_value=100,  # EUR
 	minimal_move=5.0,          # percent

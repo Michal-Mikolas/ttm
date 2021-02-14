@@ -17,7 +17,7 @@ except:
 # Init
 #
 exchange = ccxt.bittrex({'enableRateLimit': True})
-strategy = ttm.strategy.SameValue(
+strategy = ttm.strategy.DCA(
 	pair='BTC/USD',
 	initial_target_value=100,  # USD
 	minimal_move=5.0,          # percent

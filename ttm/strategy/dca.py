@@ -10,7 +10,7 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
-class SameValue(Strategy):
+class DCA(Strategy):
 
 	def __init__(self, pair: str, initial_target_value: float, minimal_move=5.0, tick_period=60, timeframe='1m', sell_modifier=1.00, buy_modifier=1.00):
 		super().__init__()
