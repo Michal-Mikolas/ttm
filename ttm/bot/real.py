@@ -68,6 +68,9 @@ class Real(Bot):
 		else:
 			return 0.0
 
+	def get_tickers(self, pairs):
+		return self.exchange.fetch_tickers(pairs)
+
 	def get_ohlcvs(self, pair: str = None, timeframe: str = None, from_datetime=None, till_datetime=None):
 		# Prepare
 		pair = pair if pair else self.get_last_pair()

@@ -34,6 +34,9 @@ class Bot():
 	def get_balance(self, symbol):
 		pass
 
+	def get_ticker(self, pairs):
+		pass
+
 	def get_ohlcvs(self, pair=None, timeframe=None, from_datetime=None, till_datetime=None):
 		pass
 

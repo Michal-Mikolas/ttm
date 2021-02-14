@@ -2,9 +2,10 @@ from datetime import datetime
 from dateutil.parser import parse
 import ccxt
 import ttm
+from pprint import pprint
 
 exchange = ccxt.bittrex({'enableRateLimit': True})
-strategy = ttm.strategy.SameValue('BTC/USD', 100)
+strategy = ttm.strategy.DCA('BTC/USD', 100)
 storage = ttm.storage.JSONFile('test-storage.json')
 cache = ttm.storage.JSONFile('cache.json')
 logger = ttm.logger.Console()
@@ -14,10 +15,17 @@ bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-01-01',
 #
 # CCXT
 #
-ohlcvs = exchange.fetch_ohlcv('BTC/USD', '1d')
+ticker = exchange.fetch_ticker('BTC/USDT')
+pprint(ticker)  ###
+print(ticker['bid'], ' | ', ticker['ask'])  ###
+
+ohlcvs = exchange.fetch_ohlcv('BTC/USDT', '1d')
+print(ohlcvs[-1][4])  ###
 assert len(ohlcvs) > 1, "Exchange fetch_ohlcv test 1 failed"
 assert ohlcvs[-1][0] > 1606780800000, "Exchange fetch_ohlcv test 2 failed"
 assert ohlcvs[-1][4] > 0, "Exchange fetch_ohlcv test 3 failed"
+
+exit()
 
 #
 # Fee
