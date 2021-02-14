@@ -7,6 +7,7 @@ from ttm.logger import Logger
 from datetime import datetime
 from dateutil.parser import parse
 import time
+from urllib3.exceptions import ProtocolError
 
 
 """
@@ -96,15 +97,21 @@ class Real(Bot):
 					self.log('tick...', priority=0)
 					self.strategy.tick()
 
-			except (ccxt.RequestTimeout, ccxt.NetworkError):
-				self.log('network error...', priority=0, extra_values=False)
+			except (ccxt.RequestTimeout, ccxt.NetworkError, ProtocolError):
+				try:
+					self.log('network error...', priority=0, extra_values=False)
+				except:
+					pass
 
 			finally:
-				self.log(
-					'waiting {:d} seconds...'.format(self.strategy.tick_period),
-					priority=0,
-					extra_values=False
-				)
+				try:
+					self.log(
+						'waiting {:d} seconds...'.format(self.strategy.tick_period),
+						priority=0,
+						extra_values=False
+					)
+				except:
+					pass
 				time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
