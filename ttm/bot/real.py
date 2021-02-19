@@ -57,10 +57,7 @@ class Real(Bot):
 
 	def get_balance(self, symbol):
 		# Fetch data from exchange
-		try:
-			balances = self.exchange.fetch_free_balance()
-		except:
-			balances = {}
+		balances = self.exchange.fetch_free_balance()
 
 		# Return
 		if symbol in balances:
