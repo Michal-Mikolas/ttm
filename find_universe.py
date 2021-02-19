@@ -24,7 +24,9 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
 	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
 	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
-# exchanges = ['coinex', 'bitmart', 'bitvavo', 'hitbtc', 'bittrex']
+exchanges = ['bitvavo', 'stex', 'liquid', 'gateio', 'southxchange', 'bigone', 'timex',
+	'poloniex', 'bitmart', 'bw', 'bittrex', 'bitfinex2', 'coinex', 'oceanex', 'bitfinex',
+	'huobijp', 'hitbtc', 'exx', 'okex', 'cex', 'bitkk', 'bequant', 'ftx', 'kucoin']
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
 cache = ttm.storage.JSONFile('cache-universe.json')                     # storage for performance optimalisation
@@ -72,6 +74,8 @@ while True:
 			stats = strategy.tick()
 
 			# Save results into statistics
+			# TODO stats[path]['fees']
+			# TODO stats[path]['last_value']
 			# - init stats
 			all_stats = storage.get('all_stats') or {}
 			if exchange_name not in all_stats:
