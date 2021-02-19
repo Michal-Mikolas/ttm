@@ -22,7 +22,7 @@ class Universe(Strategy):
 	 #  #   ## #   #
 	### #    # #   #
 
-	def __init__(self, target: str, exchange_pairs: List, minimal_profit=1.0, path_length=4, tick_period=60, timeframe='1m'):
+	def __init__(self, target: str, exchange_pairs: List, minimal_profit=1.0, path_length=4, tick_period=60):
 		super().__init__()
 
 		# Config
@@ -31,11 +31,10 @@ class Universe(Strategy):
 		self.minimal_profit = minimal_profit  # percent
 		self.path_length = path_length
 		self.tick_period = tick_period        # seconds
-		self.timeframe = timeframe
 
 		# Initial calculations
 		self.paths = self.build_paths()
-		pprint(self.paths); pprint(len(self.paths))  ###
+		# print('# PATHS') ; pprint(self.paths); pprint(len(self.paths))  ###
 		self.prices = self.get_pairs_from_paths(self.paths)
 
 	def parse_pairs(self, pairs: List):
@@ -128,12 +127,13 @@ class Universe(Strategy):
 
 		stats = self.calculate_path_stats()
 		for key, values in stats.copy().items():
-			if values['value'] < (1 + self.minimal_profit / 100):
+			if values['value'] < (100 + self.minimal_profit):
 				stats.pop(key)
 
-		# stats = sorted(stats.items(), key=lambda stat: stat['value'])
+		stats = {k:stats[k] for k in sorted(stats, key=lambda k: stats[k]['value'])}
 
-		pprint(stats)
+		# pprint(stats)  ###
+		return stats
 
 	######
 	#     # #####  #  ####  ######  ####
@@ -154,6 +154,12 @@ class Universe(Strategy):
 		# Save prices to the list
 		for pair, price in self.prices.items():
 			if pair in self.exchange_pairs:
+				# Check
+				if pair not in tickers:
+					continue
+				if not tickers[pair]['ask'] or not tickers[pair]['bid']:
+					continue
+
 				# Price for exchange pair (buy)
 				self.prices[pair] = tickers[pair]['ask']
 
@@ -168,12 +174,41 @@ class Universe(Strategy):
 		for path_key, path in self.paths.items():
 			path_stats[path_key] = {'value': None}
 
-			value = 1
-			for i, symbol in enumerate(path):
-				if len(path) >= (i+2):
-					pair = path[i] + '/' + path[i+1]
-					value = value / self.prices[pair]
+			try:
+				value = 100
+				for i, symbol in enumerate(path):
+					if len(path) >= (i+2):
+						pair = path[i] + '/' + path[i+1]
 
-			path_stats[path_key]['value'] = value
+						fee_percent = self.get_fee(pair)
+
+						# print('• value in old curr: %f' % value) ##
+						# print('• price: %f' % self.prices[pair]) ##
+						value = value / self.prices[pair]
+						# print('• value before fee: %f' % value) ##
+						value *= (1 - fee_percent / 100)
+						# print('• value after fee: %f' % value) ##
+						# print('------------') ##
+						# exit()  ###
+
+				path_stats[path_key]['value'] = value
+
+			except TypeError:  # self.prices[pair] is None
+				path_stats.pop(path_key)
 
 		return path_stats
+
+	def get_fee(self, pair):
+		# print('• pair: %s' % pair) ##
+		if pair in self.exchange_pairs:
+			info = self.bot.exchange.market(pair)
+			# print('fee is {:f} %.'.format(info['taker'] * 100)) ##
+			return info['taker'] * 100
+
+		else:
+			symbols = pair.split('/')
+			pair = "%s/%s" % (symbols[1], symbols[0])
+			# print('• (%s)' % pair) ##
+			info = self.bot.exchange.market(pair)
+			# print('fee is {:f} %.'.format(info['maker'] * 100)) ##
+			return info['maker'] * 100

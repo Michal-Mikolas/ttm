@@ -4,7 +4,7 @@ import ccxt
 import ttm
 from pprint import pprint
 
-exchange = ccxt.bittrex({'enableRateLimit': True})
+exchange = ccxt.binance({'enableRateLimit': True})
 strategy = ttm.strategy.DCA('BTC/USD', 100)
 storage = ttm.storage.JSONFile('test-storage.json')
 cache = ttm.storage.JSONFile('cache.json')
@@ -13,19 +13,24 @@ logger.set_pair('BTC/USD')
 bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-01-01', '2019-04-01')
 
 #
+# Tools
+#
+pairs = ttm.Tools.get_pairs(exchange)
+assert 'ETH/BTC' in pairs, "Tools.get_pairs test failed"
+
+#
 # CCXT
 #
-ticker = exchange.fetch_ticker('BTC/USDT')
-pprint(ticker)  ###
-print(ticker['bid'], ' | ', ticker['ask'])  ###
+markets = exchange.fetch_markets()
+assert markets[0]['active'] == True, "fet_markets() 1 test failed"
+assert markets[0]['symbol'], "fet_markets() 2 test failed"
+
+ticker = exchange.fetch_ticker('ETH/BTC')
 
 ohlcvs = exchange.fetch_ohlcv('BTC/USDT', '1d')
-print(ohlcvs[-1][4])  ###
 assert len(ohlcvs) > 1, "Exchange fetch_ohlcv test 1 failed"
 assert ohlcvs[-1][0] > 1606780800000, "Exchange fetch_ohlcv test 2 failed"
 assert ohlcvs[-1][4] > 0, "Exchange fetch_ohlcv test 3 failed"
-
-exit()
 
 #
 # Fee
