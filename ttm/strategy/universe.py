@@ -172,26 +172,27 @@ class Universe(Strategy):
 	def calculate_path_stats(self):
 		path_stats = {}
 		for path_key, path in self.paths.items():
-			path_stats[path_key] = {'value': None}
+			path_stats[path_key] = {'value': None, 'value_fee_free': None}
 
 			try:
 				value = 100
+				value_fee_free = 100
 				for i, symbol in enumerate(path):
 					if len(path) >= (i+2):
 						pair = path[i] + '/' + path[i+1]
 
-						fee_percent = self.get_fee(pair)
-
-						# print('• value in old curr: %f' % value) ##
-						# print('• price: %f' % self.prices[pair]) ##
+						# Value including fee
 						value = value / self.prices[pair]
-						# print('• value before fee: %f' % value) ##
-						value *= (1 - fee_percent / 100)
-						# print('• value after fee: %f' % value) ##
-						# print('------------') ##
-						# exit()  ###
+
+						fee_percent = self.get_fee(pair)
+						fee = value * fee_percent / 100
+						value -= fee
+
+						# Value fee-free
+						value_fee_free = value_fee_free / self.prices[pair]
 
 				path_stats[path_key]['value'] = value
+				path_stats[path_key]['value_fee_free'] = value_fee_free
 
 			except TypeError:  # self.prices[pair] is None
 				path_stats.pop(path_key)
@@ -199,16 +200,12 @@ class Universe(Strategy):
 		return path_stats
 
 	def get_fee(self, pair):
-		# print('• pair: %s' % pair) ##
 		if pair in self.exchange_pairs:
 			info = self.bot.exchange.market(pair)
-			# print('fee is {:f} %.'.format(info['taker'] * 100)) ##
 			return info['taker'] * 100
 
 		else:
 			symbols = pair.split('/')
 			pair = "%s/%s" % (symbols[1], symbols[0])
-			# print('• (%s)' % pair) ##
 			info = self.bot.exchange.market(pair)
-			# print('fee is {:f} %.'.format(info['maker'] * 100)) ##
 			return info['maker'] * 100

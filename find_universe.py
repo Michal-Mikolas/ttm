@@ -79,7 +79,11 @@ while True:
 			# - init stats
 			all_stats = storage.get('all_stats') or {}
 			if exchange_name not in all_stats:
-				all_stats[exchange_name] = {'rounds': 0, 'value': 100, 'paths': {}}
+				all_stats[exchange_name] = {
+					'rounds': 0,
+					'value': 100,
+					'paths': {},
+				}
 
 			# - count stats
 			all_stats[exchange_name]['rounds'] += 1
@@ -87,10 +91,23 @@ while True:
 				all_stats[exchange_name]['value'] *= path_stats['value'] / 100
 
 				if path_key not in all_stats[exchange_name]['paths']:
-					all_stats[exchange_name]['paths'][path_key] = {'rounds': 0, 'value': 100}
+					all_stats[exchange_name]['paths'][path_key] = {
+						'rounds': 0,
+						'value': 100,
+						'value_fee_free': 100,
+						'fees': 0.0,
+						'last_value': 100,
+						'last_value_fee_free': 100,
+						'last_fees': 0.0,
+					}
 
 				all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
 				all_stats[exchange_name]['paths'][path_key]['value'] *= path_stats['value'] / 100
+				all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_stats['value_fee_free'] / 100
+				all_stats[exchange_name]['paths'][path_key]['fees'] = all_stats[exchange_name]['paths'][path_key]['value_fee_free'] - all_stats[exchange_name]['paths'][path_key]['value']
+				all_stats[exchange_name]['paths'][path_key]['last_value'] = path_stats['value']
+				all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_stats['value_fee_free']
+				all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_stats['value_fee_free'] - path_stats['value']
 
 			# - save stats
 			all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['value'], reverse=True)}
