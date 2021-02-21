@@ -27,8 +27,10 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 exchanges = ['southxchange', 'timex', 'exx', 'bitvavo', 'bittrex', 'cex', 'bigone',
 	'coinex', 'huobijp', 'oceanex', 'hitbtc', 'bitfinex', 'liquid', 'bitmart',
 	'bitfinex2', 'okex', 'bequant', 'ftx', 'kucoin']
+exchanges = ['bitfinex', 'kucoin', 'bittrex', 'hitbtc', 'cex', 'timex']
 '''
 TOP:
+  4. bitfinex
   6. kucoin
  10. bittrex
  46. hitbtc

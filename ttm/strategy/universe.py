@@ -32,10 +32,16 @@ class Universe(Strategy):
 		self.path_length = path_length
 		self.tick_period = tick_period        # seconds
 
+		self.scanner = UniverseScanner()
+
 		# Initial calculations
 		self.paths = self.build_paths()
 		# print('# PATHS') ; pprint(self.paths); pprint(len(self.paths))  ###
 		self.prices = self.get_pairs_from_paths(self.paths)
+
+	def set_bot(self, bot):
+		super().set_bot(bot)
+		self.scanner.set_bot(bot)
 
 	def parse_pairs(self, pairs: List):
 		result = {}
@@ -268,3 +274,23 @@ class Universe(Strategy):
 			pair = "%s/%s" % (symbols[1], symbols[0])
 			info = self.bot.exchange.market(pair)
 			return info['maker'] * 100
+
+
+ #####
+#     #  ####    ##   #    # #    # ###### #####
+#       #    #  #  #  ##   # ##   # #      #    #
+ #####  #      #    # # #  # # #  # #####  #    #
+      # #      ###### #  # # #  # # #      #####
+#     # #    # #    # #   ## #   ## #      #   #
+ #####   ####  #    # #    # #    # ###### #    #
+
+class UniverseScanner(object):
+
+	def __init__(self):
+		self.bot = None
+
+	def set_bot(self, bot):
+		self.bot = bot
+
+	def find_paths(pairs, endpoint):
+		pass
