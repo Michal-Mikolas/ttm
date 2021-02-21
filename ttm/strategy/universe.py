@@ -81,7 +81,7 @@ class Universe(Strategy):
 							opened['-'.join(new_path)] = new_path
 
 				# We tried hard to find the continuation, so don't try again
-				opened.pop(key, None)
+				opened.pop(key)
 
 		#
 		# 2. Filter `closed` list
@@ -114,6 +114,25 @@ class Universe(Strategy):
 
 		return pairs
 
+	def unmirror_pair(self, pair):
+		if pair not in self.exchange_pairs:
+			symbols = pair.split('/')
+			pair = symbols[1] + '/' + symbols[0]
+
+		return pair
+
+	def fetch_stats_order_books(self, stats):
+		for key, stat in stats.copy().items():
+			for i, symbol in enumerate(stat['path']):
+				if len(stat['path']) >= (i+2):
+					pair = self.unmirror_pair(stat['path'][i+1] + '/' + stat['path'][i])
+
+					if 'orderBooks' not in stat:
+						stat['orderBooks'] = {}
+					stat['orderBooks'][pair] = self.bot.exchange.fetch_order_book(pair)
+
+		return stats
+
 	#######
 	   #    #  ####  #    #
 	   #    # #    # #   #
@@ -123,16 +142,46 @@ class Universe(Strategy):
 	   #    #  ####  #    #
 
 	def tick(self):
+		#
+		# Get current data
+		#
+
+		# Refresh prices
 		self.update_prices()
 
+		# Create paths statistics
 		stats = self.calculate_path_stats()
-		for key, values in stats.copy().items():
-			if values['value'] < (100 + self.minimal_profit):
+
+		#
+		# Filter
+		#
+
+		# Filter: Only paths with required profit
+		for key, stat in stats.copy().items():
+			if stat['value'] < (100 + self.minimal_profit):
 				stats.pop(key)
 
-		stats = {k:stats[k] for k in sorted(stats, key=lambda k: stats[k]['value'])}
+		# Filter: Only paths with proper order book
+		stats = self.fetch_stats_order_books(stats)
+		for key, stat in stats.copy().items():
+			for pair, order_book in stat['orderBooks'].items():
+				if len(order_book['bids']) < 12:  ###
+					print("%s orderBook has only %d bids." % (pair, len(order_book['bids'])))
+				if len(order_book['asks']) < 12:  ###
+					print("%s orderBook has only %d asks." % (pair, len(order_book['asks'])))
 
+				if len(order_book['bids']) < 12 or len(order_book['asks']) < 12:
+					stats.pop(key)
+					break
+
+		#
+		# Finish
+		#
+		stats = {k:stats[k] for k in sorted(stats, key=lambda k: stats[k]['value'], reverse=True)}
+		# self.bot.storage.save('stats', stats)  ###
 		# pprint(stats)  ###
+		# exit()  ###
+
 		return stats
 
 	######
@@ -172,19 +221,29 @@ class Universe(Strategy):
 	def calculate_path_stats(self):
 		path_stats = {}
 		for path_key, path in self.paths.items():
-			path_stats[path_key] = {'value': None, 'value_fee_free': None}
+			path_stats[path_key] = {
+				'path': path,
+				'value': None,
+				'value_fee_free': None,
+				'steps': [],
+				'orderBooks': {}
+			}
 
 			try:
 				value = 100
 				value_fee_free = 100
+				path_stats[path_key]['steps'].append('%s: %f' % (path[0], value))
 				for i, symbol in enumerate(path):
 					if len(path) >= (i+2):
-						pair = path[i] + '/' + path[i+1]
+						pair = path[i+1] + '/' + path[i]
+						path_stats[path_key]['steps'].append('(%s = %f)' % (pair, self.prices[pair]))
 
 						# Value including fee
+						path_stats[path_key]['steps'].append('%s: %f / %f = %f' % (path[i+1], value, self.prices[pair], value / self.prices[pair]))
 						value = value / self.prices[pair]
 
 						fee_percent = self.get_fee(pair)
+						path_stats[path_key]['steps'].append('%s: %f * (1 - %f / 100) = %f' % (path[i+1], value, fee_percent, value * (1 - fee_percent / 100)))
 						fee = value * fee_percent / 100
 						value -= fee
 

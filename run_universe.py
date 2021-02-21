@@ -16,14 +16,14 @@ data_folder = 'output/universe'
 #   btcalpha!,btcbox!,btcmarkets!,btctradeua!,btcturk!,buda!,bytetrade!,
 #   chilebit!,coinbase!,coinbaseprime!,coinbasepro!,coinegg!,coinmate!,crex24!,
 # bitvavo,bitmart,coinex,hitbtc,bittrex,cex,
-exchange = ccxt.cex({
+exchange = ccxt.bitvavo({
 	'enableRateLimit': True,
 })
 pairs = ttm.Tools.get_pairs(exchange) ; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
 strategy = ttm.strategy.Universe(
 	exchange_pairs=pairs,
 	target=ttm.Tools.find_popular_base(pairs),
-	minimal_profit=0.3,  # percent
+	minimal_profit=1.0,  # percent
 	path_length=4,
 	tick_period=10,
 )

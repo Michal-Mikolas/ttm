@@ -6,61 +6,101 @@ import ccxt
 class Tools(object):
 
 	def get_pairs(exchange):
+		#
+		# 1) Get data
+		#
 		pairs = {}
 
 		try:
-			tickers = exchange.fetch_tickers()
-		except (ccxt.NotSupported, ccxt.ExchangeNotAvailable):
-			return Tools.get_pairs_using_markets(exchange)
+			tickers = Tools.get_tickers(exchange)
+			for pair, ticker in tickers.items():
+				if pair not in pairs:
+					pairs[pair] = {'ticker': None, 'market': None, 'orderBook': None}
 
-		for pair, ticker in tickers.items():
+				pairs[pair]['ticker'] = ticker
+		except ccxt.NotSupported:
+			pass
+
+		try:
+			markets = Tools.get_markets(exchange)
+			for pair, market in markets.items():
+				if pair not in pairs:
+					pairs[pair] = {'ticker': None, 'market': None, 'orderBook': None}
+
+				pairs[pair]['market'] = market
+		except ccxt.NotSupported:
+			pass
+
+		#
+		# 2) Filter only usable pairs
+		#
+		for pair, info in pairs.copy().items():
 			# Filter: Only standard pairs
 			if '/' not in pair:
+				pairs.pop(pair)
 				continue
 
-			# Filter: Only active pairs
-			if not ticker['datetime']:
+			# Filter: Only pairs with known bid and ask prices
+			if not info['ticker']:
+				pairs.pop(pair)
 				continue
 
-			if not ticker['bid'] or not ticker['ask']:
+			if not info['ticker']['bid'] or not info['ticker']['ask']:
+				pairs.pop(pair)
 				continue
 
-			now = datetime.now().timestamp()
-			last_updated = exchange.parse8601(ticker['datetime']) / 1000
-			passed = now - last_updated
-			if passed > 10:
+			# Filter: Only not-too-old pairs
+			# if not ticker['datetime']:
+			# 	pairs.pop(pair)
+
+			# if ticker['datetime']:
+			# 	now = datetime.now().timestamp()
+			# 	last_updated = exchange.parse8601(ticker['datetime']) / 1000
+			# 	passed = now - last_updated
+			# 	if passed > 10:
+			# 		continue
+
+			# 	# pprint(parse(ticker['datetime']).timestamp())
+			# 	# pprint(exchange.parse8601(ticker['datetime'])/1000)
+			# 	# pprint(datetime.now().timestamp())
+			# 	# print('------')
+
+			# Filter: Only active
+			if info['market'] and ('active' in info['market']) and (info['market']['active'] == False):
+				pairs.pop(pair)
 				continue
 
-			# pprint(parse(ticker['datetime']).timestamp())
-			# pprint(exchange.parse8601(ticker['datetime'])/1000)
-			# pprint(datetime.now().timestamp())
-			# print('------')
+			# Filter: Only 'spot' markets
+			if info['market'] and ('type' in market) and (market['type'] != 'spot'):
+				pairs.pop(pair)
+				continue
 
-			# Save
-			pairs[pair] = pair
+			# # TODO Filtr: fetchOrderBook
+			# try:
+			# 	pairs[pair]['orderBook'] = exchange.fetch_order_book(pair)
+			# except ccxt.NotSupported:
+			# 	pass
 
-		if len(pairs):
-			return pairs.values()
+		return pairs
 
-		else:
-			return Tools.get_pairs_using_markets(exchange)
+	def get_tickers(exchange):
+		pairs = {}
 
-	def get_pairs_using_markets(exchange, active = True, type = 'spot'):
+		tickers = exchange.fetch_tickers()
+		for pair, ticker in tickers.items():
+			pairs[pair] = ticker
+
+		return pairs
+
+	def get_markets(exchange, active=True, type='spot'):
 		pairs = {}
 
 		markets = exchange.fetch_markets()
 		for market in markets:
-			# Filter
-			if active and ('active' in market) and (market['active'] != active):
-				continue
-			if type and ('type' in market) and (market['type'] != type):
-				continue
-
-			# Save
 			symbol = market['symbol']
-			pairs[symbol] = symbol
+			pairs[symbol] = market
 
-		return pairs.values()
+		return pairs
 
 	def find_popular_base(pairs):
 		counter = {}

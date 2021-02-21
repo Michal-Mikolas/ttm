@@ -7,10 +7,10 @@ import keyring
 #
 data_folder = 'output/real'
 
-exchange = ccxt.bittrex({
+exchange = ccxt.binance({
 	'enableRateLimit': True,
-	'apiKey': keyring.get_password('bittrex', 'apiKey'),
-    'secret': keyring.get_password('bittrex', 'secret'),
+	'apiKey': keyring.get_password('binance', 'apiKey'),
+    'secret': keyring.get_password('binance', 'secret'),
 })
 strategy = ttm.strategy.DCA(
 	pair='BTC/EUR',
