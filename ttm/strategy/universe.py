@@ -22,7 +22,13 @@ class Universe(Strategy):
 	 #  #   ## #   #
 	### #    # #   #
 
-	def __init__(self, target: str, exchange_pairs: List, minimal_profit=1.0, path_length=4, tick_period=60):
+	def __init__(self,
+		target: str,
+		exchange_pairs: List,
+		minimal_profit=1.01,
+		path_length=4,
+		tick_period=5
+	):
 		super().__init__()
 
 		# Config
@@ -148,6 +154,15 @@ class Universe(Strategy):
 	   #    #  ####  #    #
 
 	def tick(self):
+		# paths = self.scanner.full_scan(
+		# 	self.exchange_pairs,
+		# 	endpoint=self.target,
+		# 	min_value_after_fees=1.01,  # 101 %
+		# 	min_bids_count=12,
+		# 	min_asks_count=12,
+		# )
+
+
 		#
 		# Get current data
 		#
@@ -288,9 +303,249 @@ class UniverseScanner(object):
 
 	def __init__(self):
 		self.bot = None
+		self.cache = {}
 
 	def set_bot(self, bot):
 		self.bot = bot
 
-	def find_paths(pairs, endpoint):
-		pass
+	def full_scan(self, exchange_pairs, endpoint,
+        path_length=4,
+		min_value_after_fees=1.0,
+		min_bids_count=1,
+		min_asks_count=1,
+	):
+		# 1. Get basic paths & statistics
+		paths = self.trace_paths(exchange_pairs, endpoint, path_length)
+		paths = self.fill_statistics(paths, exchange_pairs)
+
+		# 2. Filter by basic statistics
+		for path_key, path_data in paths.copy().items():
+			if min_value_after_fees and (path_data['value'] < min_value_after_fees):
+				paths.pop(path_key)
+				continue
+
+		# 3. Add more data
+		for path_key, path_data in paths.copy().items():
+
+			symbols = path_data['symbols']
+			for i, symbol in enumerate(symbols):
+				if len(symbols) >= (i+2):
+					# find proper pair supported by exchange
+					pair = symbols[i+1] + '/' + symbols[i]
+					if pair not in exchange_pairs:
+						pair = symbols[i] + '/' + symbols[i+1]
+
+					# fetch pair order_book
+					path_data['order_books'][pair] = self.bot.exchange.fetch_order_book(pair)
+
+		# 4. Filter by more data
+		for path_key, path_data in paths.copy().items():
+			for pair_key, order_book in path_data['order_books'].items():
+				# bids count
+				if min_bids_count and (len(order_book['bids']) < min_bids_count):
+					paths.pop(path_key)
+					continue
+
+				# asks count
+				if min_asks_count and (len(order_book['asks']) < min_asks_count):
+					paths.pop(path_key)
+					continue
+
+		# 5. Finish
+		paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['value'], reverse=True)}
+
+		return paths
+
+	def trace_paths(self, pairs, endpoint, path_length=4):
+		if 'trace_paths' not in self.cache:
+			pairs = self.get_two_way_pairs(pairs)
+
+			#
+			# 1. Find all possible closed paths
+			#
+			closed = {}
+			opened = {endpoint: [endpoint]}
+			while len(opened) > 0:
+				# For each path in `opened` list:
+				for path_key, path_symbols in opened.copy().items():
+					# If it is closed, move it to `closed` list
+					if (len(path_symbols) > 2) and (path_symbols[-1] == endpoint):
+						closed[path_key] = path_symbols
+						opened.pop(path_key)
+						break
+
+					# Else try to find a way to continue
+					for pair_name, pair_symbols in pairs.items():
+						if pair_symbols[0] == path_symbols[-1]:
+							# possible continuation found, create new entry
+							new_path_symbols = path_symbols.copy()
+							new_path_symbols.append(pair_symbols[1])
+
+							if len(new_path_symbols) <= path_length:
+								opened['-'.join(new_path_symbols)] = new_path_symbols
+
+					# We tried hard to find the continuation, so don't try again
+					opened.pop(path_key)
+
+			#
+			# 2. Filter non-sences in `closed` list
+			#
+			for path_key, path_symbols in closed.copy().items():
+				if len(path_symbols) <= 3:
+					closed.pop(path_key)
+
+			#
+			# 3. Add structure for future statistics
+			#
+			for path_key, path_symbols in closed.copy().items():
+				closed[path_key] = {
+					'symbols': path_symbols,
+					'value': None,
+					'value_fee_free': None,
+					'steps': [],
+					'order_books': {}
+				}
+
+			#
+			# 4. Finish
+			#
+			self.cache['trace_paths'] = closed
+
+		return self.cache['trace_paths'].copy()
+
+	def get_two_way_pairs(self, pairs):
+		result = {}
+
+		for pair_name in pairs:
+			symbols = pair_name.split('/')
+
+			result[pair_name] = symbols
+			result[symbols[1] + '/' + symbols[0]] = [symbols[1], symbols[0]]
+
+		return result
+
+	def fill_statistics(self, paths, exchange_pairs):
+		prices = self.get_prices(exchange_pairs)
+
+		# For every path...
+		for path_key, path_data in paths.copy().items():
+			path_data['steps'].append({
+				'type': 'initial',
+				'pair': None,
+				'price': None,
+				'formula': None,
+				'formula_fee_free': None,
+				'result_value': 1.0,
+				'result_value_fee_free': 1.0,
+				'result_currency': path_data['symbols'][0],
+			})
+
+			# Go through every currency pair
+			try:
+				for i, symbol in enumerate(path_data['symbols']):
+					if len(path_data['symbols']) >= (i+2):
+						# And simulate the buy/sell process.
+						last_step = path_data['steps'][-1]
+						current_step = {
+							'type': None,
+							'pair': None,
+							'price': prices[pair],
+							'formula': None,
+							'formula_fee_free': None,
+							'result_value': None,
+							'result_value_fee_free': None,
+							'result_currency': path_data['symbols'][i+1],
+						}
+
+						pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]
+						fee_percent = self.get_fee(pair, exchange_pairs)
+						fee_koef = fee_percent / 100
+						if pair in exchange_pairs:
+							# Buy
+							current_step['type'] = 'buy'
+							current_step['pair'] = pair
+							current_step['formula'] = "%f / %f * (1 - %f)" % (
+								last_step['result_value'],
+								prices[pair],
+								fee_koef,
+							)
+							current_step['formula_fee_free'] = "%f / %f" % (
+								last_step['result_value_fee_free'],
+								prices[pair],
+							)
+							current_step['result_value'] = last_step['result_value'] / prices[pair] * (1 - fee_koef)
+							current_step['result_value_fee_free'] = last_step['result_value_fee_free'] / prices[pair]
+						else:
+							# Sell
+							pair = path_data['symbols'][i] + '/' + path_data['symbols'][i+1]
+							current_step['type'] = 'sell'
+							current_step['pair'] = pair
+							current_step['formula'] = "%f * %f * (1 - %f)" % (
+								last_step['result_value'],
+								prices[pair],
+								fee_koef,
+							)
+							current_step['formula_fee_free'] = "%f * %f" % (
+								last_step['result_value_fee_free'],
+								prices[pair],
+							)
+							current_step['result_value'] = last_step['result_value'] * prices[pair] * (1 - fee_koef)
+							current_step['result_value_fee_free'] = last_step['result_value_fee_free'] * prices[pair]
+
+						path_data['steps'].append(current_step)
+
+				# Save final values
+				path_data['value'] = current_step['result_value']
+				path_data['value_fee_free'] = current_step['result_value_fee_free']
+
+			except TypeError:  # prices[pair] is not set
+				# If can't get price for a pair, discard whole path
+				paths.pop(path_key)
+
+		# Return results
+		return paths
+
+	def get_fee(self, pair, exchange_pairs):
+		cache_key = "get_fee-pair"
+
+		if cache_key not in self.cache:
+			if pair in exchange_pairs:
+				info = self.bot.exchange.market(pair)
+				self.cache[cache_key] = info['taker'] * 100
+
+			else:
+				symbols = pair.split('/')
+				pair = "%s/%s" % (symbols[1], symbols[0])
+				info = self.bot.exchange.market(pair)
+				self.cache[cache_key] = info['maker'] * 100
+
+		return self.cache[cache_key]
+
+	def get_prices(self, pairs):
+		prices = {}
+
+		# Download current prices
+		tickers = self.bot.get_tickers(pairs.keys())
+
+		# Save prices to the list
+		for pair in pairs:
+			# Check
+			if pair not in tickers:
+				continue
+			if not tickers[pair]['ask'] or not tickers[pair]['bid']:
+				continue
+			if tickers[pair]['ask'] < tickers[pair]['bid']:
+				raise Exception("%s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
+
+			# Price for exchange pair (buy)
+			prices[pair] = tickers[pair]['ask']
+
+			# Price for the mirror pair (sell)
+			symbols = pair.split('/')
+
+			mirror_pair = symbols[1] + '/' + symbols[0]
+			mirror_price = 1 / tickers[pair]['bid']
+
+			prices[mirror_pair] = mirror_price
+
+		return prices

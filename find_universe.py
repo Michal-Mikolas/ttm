@@ -24,21 +24,18 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
 	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
 	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
-exchanges = ['southxchange', 'timex', 'exx', 'bitvavo', 'bittrex', 'cex', 'bigone',
-	'coinex', 'huobijp', 'oceanex', 'hitbtc', 'bitfinex', 'liquid', 'bitmart',
-	'bitfinex2', 'okex', 'bequant', 'ftx', 'kucoin']
-exchanges = ['bitfinex', 'kucoin', 'bittrex', 'hitbtc', 'cex', 'timex']
+exchanges = ['timex', 'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
+	'oceanex', 'kucoin', 'bitvavo', 'liquid', 'binanceus', 'cex', 'bitfinex', 'bigone',
+	'coinex', 'aax', 'acx', 'aofex', 'bequant', 'binance', 'bitcoincom', 'bitfinex2',
+	'bitget', 'bithumb', 'bitmart', 'bitmex', 'bitpanda', 'braziliex', 'bybit',
+	'bytetrade', 'cdax', 'coinfalcon', 'currencycom', 'delta', 'deribit', 'eterbase',
+	'exmo', 'ftx', 'gopax', 'hbtc', 'hollaex', 'huobipro', 'ice3x', 'kuna', 'lbank',
+	'novadax', 'okcoin', 'okex', 'rightbtc', 'tidebit', 'vcc', 'xena']
+exchanges = ['timex', 'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
+	'oceanex', 'kucoin', 'bitvavo', 'liquid', 'binanceus', 'cex', 'bitfinex', 'bigone',
+	'coinex', 'aax', 'acx']
 '''
 TOP:
-  4. bitfinex
-  6. kucoin
- 10. bittrex
- 46. hitbtc
- 66. cex
-101. timex
-122. oceanex
-157. southxchange
-213. exx
 '''
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
@@ -54,26 +51,9 @@ logger.set_pair('BTC/USDT')
 all_stats = storage.get('all_stats') or {}
 storage.save('all_stats', all_stats)
 
-# Work work work...
+# Never-ending work...
 while True:
 	for exchange_name in exchanges:
-
-		# print('')
-		# print(exchange_name)
-		# exchange = ttm.Tools.get_class('ccxt.' + exchange_name)({
-		# 	'enableRateLimit': True,
-		# })
-		# pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
-		# # EUR-RDD-BTC-EUR
-		# pprint('RDD/EUR' in pairs)
-		# pprint('EUR/RDD' in pairs)
-		# pprint('RDD/BTC' in pairs)
-		# pprint('BTC/RDD' in pairs)
-		# pprint('BTC/EUR' in pairs)
-		# pprint('EUR/BTC' in pairs)
-		# pprint({'RDD/BTC': pairs['RDD/BTC']})
-		# exit()
-
 		for i in range(5):
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
@@ -89,23 +69,30 @@ while True:
 					raise Exception("%s doesn't support market orders." % exchange_name)
 
 				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
-				strategy = ttm.strategy.Universe(
-					exchange_pairs=pairs,
-					target=ttm.Tools.find_popular_base(pairs),
-					minimal_profit=1.0,  # percent
-					path_length=4,
-					tick_period=10,
+				endpoint = ttm.Tools.find_popular_base(pairs)
+
+				bot = ttm.bot.Real(
+					exchange,
+					ttm.strategy.Universe(
+						exchange_pairs=pairs,
+						target=endpoint,
+					),
+					storage,
+					cache,
+					logger
 				)
 
-				bot = ttm.bot.Real(exchange, strategy, storage, cache, logger)
-
 				#
-				# 2) Simulate one tick
+				# 2) Scan for current options
 				#
-
-				# Do the tick
-				strategy.start()
-				stats = strategy.tick()
+				paths = bot.strategy.scanner.full_scan(
+					pairs,
+					endpoint,
+					path_length=4,
+					min_value_after_fees=1.01,
+					min_bids_count=12,
+					min_asks_count=12,
+				)
 
 				# Save results into statistics
 				# - init stats
@@ -121,42 +108,38 @@ while True:
 
 				# - count stats
 				all_stats[exchange_name]['rounds'] += 1
-				for path_key, path_stats in stats.items():
-					all_stats[exchange_name]['value'] *= path_stats['value'] / 100
+				for path_key, path_info in paths.items():
+					print(" • %s: %f" % (path_key, path_info['value']))
+					all_stats[exchange_name]['value'] *= path_info['value']
 
 					if path_key not in all_stats[exchange_name]['paths']:
 						all_stats[exchange_name]['paths'][path_key] = {
 							'rounds': 0,
 							'value': 100,
 							'value_fee_free': 100,
-							'fees': 0.0,
 							'datetime': [],
 							'last_value': 100,
 							'last_value_fee_free': 100,
 							'last_fees': 0.0,
 							'steps': [],
-							'orderBooks': {},
+							'order_books': {},
 						}
 
 					all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
-					all_stats[exchange_name]['paths'][path_key]['value'] *= path_stats['value'] / 100
-					all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_stats['value_fee_free'] / 100
-					all_stats[exchange_name]['paths'][path_key]['fees'] = all_stats[exchange_name]['paths'][path_key]['value_fee_free'] - all_stats[exchange_name]['paths'][path_key]['value']
+					all_stats[exchange_name]['paths'][path_key]['value'] *= path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_info['value_fee_free']
 					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-					all_stats[exchange_name]['paths'][path_key]['last_value'] = path_stats['value']
-					all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_stats['value_fee_free']
-					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_stats['value_fee_free'] - path_stats['value']
-					all_stats[exchange_name]['paths'][path_key]['steps'] = path_stats['steps']
-					all_stats[exchange_name]['paths'][path_key]['orderBooks'] = path_stats['orderBooks']
+					all_stats[exchange_name]['paths'][path_key]['last_value'] = path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_info['value_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['value_fee_free'] - path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
+					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
 
 				all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
 
 				# - save stats
 				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['value'], reverse=True)}
 				storage.save('all_stats', all_stats)
-
-				# Finish
-				strategy.finish()
 
 			except Exception as e:
 				exceptions = storage.get('exceptions') or {}

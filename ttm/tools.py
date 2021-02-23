@@ -11,6 +11,7 @@ class Tools(object):
 		#
 		pairs = {}
 
+		# From tickers
 		try:
 			tickers = Tools.get_tickers(exchange)
 			for pair, ticker in tickers.items():
@@ -21,6 +22,7 @@ class Tools(object):
 		except ccxt.NotSupported:
 			pass
 
+		# From markets info
 		try:
 			markets = Tools.get_markets(exchange)
 			for pair, market in markets.items():
@@ -49,22 +51,6 @@ class Tools(object):
 				pairs.pop(pair)
 				continue
 
-			# Filter: Only not-too-old pairs
-			# if not ticker['datetime']:
-			# 	pairs.pop(pair)
-
-			# if ticker['datetime']:
-			# 	now = datetime.now().timestamp()
-			# 	last_updated = exchange.parse8601(ticker['datetime']) / 1000
-			# 	passed = now - last_updated
-			# 	if passed > 10:
-			# 		continue
-
-			# 	# pprint(parse(ticker['datetime']).timestamp())
-			# 	# pprint(exchange.parse8601(ticker['datetime'])/1000)
-			# 	# pprint(datetime.now().timestamp())
-			# 	# print('------')
-
 			# Filter: Only active
 			if info['market'] and ('active' in info['market']) and (info['market']['active'] == False):
 				pairs.pop(pair)
@@ -74,12 +60,6 @@ class Tools(object):
 			if info['market'] and ('type' in market) and (market['type'] != 'spot'):
 				pairs.pop(pair)
 				continue
-
-			# # TODO Filtr: fetchOrderBook
-			# try:
-			# 	pairs[pair]['orderBook'] = exchange.fetch_order_book(pair)
-			# except ccxt.NotSupported:
-			# 	pass
 
 		return pairs
 
