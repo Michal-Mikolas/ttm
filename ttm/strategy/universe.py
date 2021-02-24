@@ -344,12 +344,12 @@ class UniverseScanner(object):
 				# bids count
 				if min_bids_count and (len(order_book['bids']) < min_bids_count):
 					paths.pop(path_key)
-					continue
+					break
 
 				# asks count
 				if min_asks_count and (len(order_book['asks']) < min_asks_count):
 					paths.pop(path_key)
-					continue
+					break
 
 		# 5. Finish
 		paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['value'], reverse=True)}
@@ -449,7 +449,7 @@ class UniverseScanner(object):
 						current_step = {
 							'type': None,
 							'pair': None,
-							'price': prices[pair],
+							'price': None,
 							'formula': None,
 							'formula_fee_free': None,
 							'result_value': None,
@@ -464,6 +464,7 @@ class UniverseScanner(object):
 							# Buy
 							current_step['type'] = 'buy'
 							current_step['pair'] = pair
+							current_step['price'] = prices[pair]
 							current_step['formula'] = "%f / %f * (1 - %f)" % (
 								last_step['result_value'],
 								prices[pair],
@@ -480,6 +481,7 @@ class UniverseScanner(object):
 							pair = path_data['symbols'][i] + '/' + path_data['symbols'][i+1]
 							current_step['type'] = 'sell'
 							current_step['pair'] = pair
+							current_step['price'] = prices[pair]
 							current_step['formula'] = "%f * %f * (1 - %f)" % (
 								last_step['result_value'],
 								prices[pair],
@@ -535,7 +537,10 @@ class UniverseScanner(object):
 			if not tickers[pair]['ask'] or not tickers[pair]['bid']:
 				continue
 			if tickers[pair]['ask'] < tickers[pair]['bid']:
-				raise Exception("%s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
+				# pprint(tickers[pair])  ###
+				# pprint(self.bot.exchange.fetch_order_book(pair))  ###
+				# raise Exception("%s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
+				print(" ! WARNING: %s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
 
 			# Price for exchange pair (buy)
 			prices[pair] = tickers[pair]['ask']
