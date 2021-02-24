@@ -31,7 +31,8 @@ exchanges = ['timex', 'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bi
 	'bytetrade', 'cdax', 'coinfalcon', 'currencycom', 'delta', 'deribit', 'eterbase',
 	'exmo', 'ftx', 'gopax', 'hbtc', 'hollaex', 'huobipro', 'ice3x', 'kuna', 'lbank',
 	'novadax', 'okcoin', 'okex', 'rightbtc', 'tidebit', 'vcc', 'xena']
-exchanges = ['timex', 'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
+exchanges = [#'timex',
+	'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
 	'oceanex', 'kucoin', 'bitvavo', 'liquid', 'binanceus', 'cex', 'bitfinex', 'bigone',
 	'coinex', 'aax', 'acx']
 '''
