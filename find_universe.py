@@ -48,6 +48,10 @@ all_stats = storage.get('all_stats') or {}
 storage.save('all_stats', all_stats)
 
 # Never-ending work...
+trade_amounts = {
+	'BTC': 0.001,
+	'USDT': 50,
+}
 while True:
 	for exchange_name in exchanges:
 		for i in range(1):
@@ -88,6 +92,7 @@ while True:
 					min_value_after_fees=1.01,
 					min_bids_count=12,
 					min_asks_count=12,
+					trade_amount=(trade_amounts[endpoint] if endpoint in trade_amounts else None)
 				)
 
 				# Save results into statistics

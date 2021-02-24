@@ -309,10 +309,11 @@ class UniverseScanner(object):
 		self.bot = bot
 
 	def full_scan(self, exchange_pairs, endpoint,
-        path_length=4,
-		min_value_after_fees=1.0,
-		min_bids_count=1,
-		min_asks_count=1,
+        path_length = 4,
+		min_value_after_fees = 1.0,
+		min_bids_count = 1,
+		min_asks_count = 1,
+		trade_amount = None,
 	):
 		# 1. Get basic paths & statistics
 		paths = self.trace_paths(exchange_pairs, endpoint, path_length)
@@ -351,7 +352,19 @@ class UniverseScanner(object):
 					paths.pop(path_key)
 					break
 
-		# 5. Finish
+		# 5. Simulation based on order_book
+		if trade_amount:
+			for path_key, path_data in paths.copy().items():
+				# Add simulation results
+				path_data['simulation'] = self.simulate(path_data, trade_amount, exchange_pairs)
+
+				# Filter by simulation results
+				simulation_value = path_data['simulation'][-1]['result_value'] / trade_amount
+				if simulation_value < min_value_after_fees:
+					paths.pop(path_key)
+					continue
+
+		# 6. Finish
 		paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['value'], reverse=True)}
 
 		return paths
@@ -403,7 +416,8 @@ class UniverseScanner(object):
 					'value': None,
 					'value_fee_free': None,
 					'steps': [],
-					'order_books': {}
+					'order_books': {},
+					'simulation': [],
 				}
 
 			#
@@ -508,7 +522,7 @@ class UniverseScanner(object):
 		return paths
 
 	def get_fee(self, pair, exchange_pairs):
-		cache_key = "get_fee-pair"
+		cache_key = "get_fee-" + pair
 
 		if cache_key not in self.cache:
 			if pair in exchange_pairs:
@@ -537,9 +551,6 @@ class UniverseScanner(object):
 			if not tickers[pair]['ask'] or not tickers[pair]['bid']:
 				continue
 			if tickers[pair]['ask'] < tickers[pair]['bid']:
-				# pprint(tickers[pair])  ###
-				# pprint(self.bot.exchange.fetch_order_book(pair))  ###
-				# raise Exception("%s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
 				print(" ! WARNING: %s: Weird universe occured, 'ask' price (%f) is lower than 'bid' price (%f)." % (pair, tickers[pair]['ask'], tickers[pair]['bid']))
 
 			prices[pair] = {
@@ -547,15 +558,72 @@ class UniverseScanner(object):
 				'bid': tickers[pair]['bid'],
 			}
 
-			# # Price for exchange pair (buy)
-			# prices[pair] = tickers[pair]['ask']
-
-			# # Price for the mirror pair (sell)
-			# symbols = pair.split('/')
-
-			# mirror_pair = symbols[1] + '/' + symbols[0]
-			# mirror_price = 1 / tickers[pair]['bid']
-
-			# prices[mirror_pair] = mirror_price
-
 		return prices
+
+	def simulate(self, path_data, trade_amount, exchange_pairs):
+		path_data['simulation'].append({
+			'type': 'initial',
+			'pair': None,
+			'price': None,
+			'formula': None,
+			'formula_fee_free': None,
+			'result_value': trade_amount,
+			'result_value_fee_free': trade_amount,
+			'result_currency': path_data['symbols'][0],
+		})
+
+		# Go through every currency pair
+		# try:
+		for i, symbol in enumerate(path_data['symbols']):
+			if len(path_data['symbols']) >= (i+2):
+				# And simulate the buy/sell process.
+				last_step = path_data['simulation'][-1]
+				current_step = {
+					'type': None,
+					'pair': None,
+					'price': None,
+					'formula': None,
+					'formula_fee_free': None,
+					'result_value': None,
+					'result_value_fee_free': None,
+					'result_currency': path_data['symbols'][i+1],
+				}
+
+				pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]
+				fee_percent = self.get_fee(pair, exchange_pairs)
+				fee_koef = fee_percent / 100
+				if pair in exchange_pairs:
+					# Buy
+					result_value = 0
+					result_value_fee_free = 0
+					money_left = last_step['result_value']
+					for price, amount in path_data['order_books'][pair]['asks']:
+						needed_amount = money_left / price
+						if needed_amount > amount:
+							result_value += amount * (1 - fee_koef)
+							money_left -= amount * price
+
+						if needed_amount <= amount:
+							result_value += needed_amount * (1 - fee_koef)
+							money_left = 0
+
+						if money_left == 0:
+							break
+
+
+					current_step['type'] = 'buy'
+					current_step['pair'] = pair
+					current_step['result_value'] = last_step['result_value'] / prices[pair]['ask'] * (1 - fee_koef)
+					current_step['result_value_fee_free'] = last_step['result_value_fee_free'] / prices[pair]['ask']
+				else:
+					# Sell
+					pair = path_data['symbols'][i] + '/' + path_data['symbols'][i+1]
+					current_step['type'] = 'sell'
+					current_step['pair'] = pair
+					current_step['result_value'] = last_step['result_value'] * prices[pair]['bid'] * (1 - fee_koef)
+					current_step['result_value_fee_free'] = last_step['result_value_fee_free'] * prices[pair]['bid']
+
+				path_data['simulation'].append(current_step)
+
+		# Finish
+		return path_data['simulation']
