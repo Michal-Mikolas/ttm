@@ -24,20 +24,15 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
 	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
 	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
-exchanges = ['timex', 'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
-	'oceanex', 'kucoin', 'bitvavo', 'liquid', 'binanceus', 'cex', 'bitfinex', 'bigone',
-	'coinex', 'aax', 'acx', 'aofex', 'bequant', 'binance', 'bitcoincom', 'bitfinex2',
-	'bitget', 'bithumb', 'bitmart', 'bitmex', 'bitpanda', 'braziliex', 'bybit',
-	'bytetrade', 'cdax', 'coinfalcon', 'currencycom', 'delta', 'deribit', 'eterbase',
-	'exmo', 'ftx', 'gopax', 'hbtc', 'hollaex', 'huobipro', 'ice3x', 'kuna', 'lbank',
-	'novadax', 'okcoin', 'okex', 'rightbtc', 'tidebit', 'vcc', 'xena']
-exchanges = [#'timex',
-	'therock', 'southxchange', 'exx', 'hitbtc', 'huobijp', 'bittrex',
-	'oceanex', 'kucoin', 'bitvavo', 'liquid', 'binanceus', 'cex', 'bitfinex', 'bigone',
-	'coinex', 'aax', 'acx']
-'''
-TOP:
-'''
+exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
+	'bitcoincom', 'bitfinex', 'bitfinex2', 'bitget', 'bithumb', 'bitkk', 'bitmart',
+	'bitmex', 'bitpanda', 'bittrex', 'bitvavo', 'bitz', 'bleutrade', 'braziliex', 'bw',
+	'bybit', 'bytetrade', 'cdax', 'cex', 'coinex', 'coinfalcon', 'coinone', 'currencycom',
+	'delta', 'deribit', 'eterbase', 'exmo', 'exx', 'ftx', 'gateio', 'gemini', 'gopax',
+	'hbtc', 'hitbtc', 'hollaex', 'huobijp', 'huobipro', 'ice3x', 'kucoin', 'kuna',
+	'lakebtc', 'latoken', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex',
+	'poloniex', 'qtrade', 'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit',
+	'timex', 'vcc', 'whitebit', 'xena', 'zb']
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
 cache = ttm.storage.JSONFile('cache-universe.json')                     # storage for performance optimalisation
@@ -55,97 +50,97 @@ storage.save('all_stats', all_stats)
 # Never-ending work...
 while True:
 	for exchange_name in exchanges:
-		for i in range(5):
-			# try:
-			print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
+		for i in range(1):
+			try:
+				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
 
-			#
-			# 1) Prepare everything
-			#
-			exchange = ttm.Tools.get_class('ccxt.' + exchange_name)({
-				'enableRateLimit': True,
-			})
+				#
+				# 1) Prepare everything
+				#
+				exchange = ttm.Tools.get_class('ccxt.' + exchange_name)({
+					'enableRateLimit': True,
+				})
 
-			if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
-				raise Exception("%s doesn't support market orders." % exchange_name)
+				# if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
+				# 	raise Exception("%s doesn't support market orders." % exchange_name)
 
-			pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
-			endpoint = ttm.Tools.find_popular_base(pairs)
+				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
+				endpoint = ttm.Tools.find_popular_base(pairs)
 
-			bot = ttm.bot.Real(
-				exchange,
-				ttm.strategy.Universe(
-					exchange_pairs=pairs,
-					target=endpoint,
-				),
-				storage,
-				cache,
-				logger
-			)
+				bot = ttm.bot.Real(
+					exchange,
+					ttm.strategy.Universe(
+						exchange_pairs=pairs,
+						target=endpoint,
+					),
+					storage,
+					cache,
+					logger
+				)
 
-			#
-			# 2) Scan for current options
-			#
-			paths = bot.strategy.scanner.full_scan(
-				pairs,
-				endpoint,
-				path_length=4,
-				min_value_after_fees=1.01,
-				min_bids_count=12,
-				min_asks_count=12,
-			)
+				#
+				# 2) Scan for current options
+				#
+				paths = bot.strategy.scanner.full_scan(
+					pairs,
+					endpoint,
+					path_length=4,
+					min_value_after_fees=1.01,
+					min_bids_count=12,
+					min_asks_count=12,
+				)
 
-			# Save results into statistics
-			# - init stats
-			all_stats = storage.get('all_stats') or {}
-			if exchange_name not in all_stats:
-				all_stats[exchange_name] = {
-					'rounds': 0,
-					'value': 100,
-					'pairs_count': len(pairs),
-					'paths_count': 0,
-					'paths': {},
-				}
-
-			# - count stats
-			all_stats[exchange_name]['rounds'] += 1
-			for path_key, path_info in paths.items():
-				print(" • %s: %f" % (path_key, path_info['value']))
-				all_stats[exchange_name]['value'] *= path_info['value']
-
-				if path_key not in all_stats[exchange_name]['paths']:
-					all_stats[exchange_name]['paths'][path_key] = {
+				# Save results into statistics
+				# - init stats
+				all_stats = storage.get('all_stats') or {}
+				if exchange_name not in all_stats:
+					all_stats[exchange_name] = {
 						'rounds': 0,
 						'value': 100,
-						'value_fee_free': 100,
-						'datetime': [],
-						'last_value': 100,
-						'last_value_fee_free': 100,
-						'last_fees': 0.0,
-						'steps': [],
-						'order_books': {},
+						'pairs_count': len(pairs),
+						'paths_count': 0,
+						'paths': {},
 					}
 
-				all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
-				all_stats[exchange_name]['paths'][path_key]['value'] *= path_info['value']
-				all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_info['value_fee_free']
-				all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-				all_stats[exchange_name]['paths'][path_key]['last_value'] = path_info['value']
-				all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_info['value_fee_free']
-				all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['value_fee_free'] - path_info['value']
-				all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
-				all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
+				# - count stats
+				all_stats[exchange_name]['rounds'] += 1
+				for path_key, path_info in paths.items():
+					print(" • %s: %f" % (path_key, path_info['value']))
+					all_stats[exchange_name]['value'] *= path_info['value']
 
-			all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
+					if path_key not in all_stats[exchange_name]['paths']:
+						all_stats[exchange_name]['paths'][path_key] = {
+							'rounds': 0,
+							'value': 100,
+							'value_fee_free': 100,
+							'datetime': [],
+							'last_value': 100,
+							'last_value_fee_free': 100,
+							'last_fees': 0.0,
+							'steps': [],
+							'order_books': {},
+						}
 
-			# - save stats
-			all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['value'], reverse=True)}
-			storage.save('all_stats', all_stats)
+					all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
+					all_stats[exchange_name]['paths'][path_key]['value'] *= path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_info['value_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+					all_stats[exchange_name]['paths'][path_key]['last_value'] = path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_info['value_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['value_fee_free'] - path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
+					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
 
-			# except Exception as e:
-			# 	exceptions = storage.get('exceptions') or {}
-			# 	if exchange_name not in exceptions:
-			# 		exceptions[exchange_name] = []
+				all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
 
-			# 	exceptions[exchange_name] = type(e).__name__ + ': ' + str(e)[0:255]
-			# 	storage.save('exceptions', exceptions)
+				# - save stats
+				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['value'], reverse=True)}
+				storage.save('all_stats', all_stats)
+
+			except Exception as e:
+				exceptions = storage.get('exceptions') or {}
+				if exchange_name not in exceptions:
+					exceptions[exchange_name] = []
+
+				exceptions[exchange_name] = type(e).__name__ + ': ' + str(e)[0:255]
+				storage.save('exceptions', exceptions)
