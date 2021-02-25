@@ -567,8 +567,8 @@ class UniverseScanner(object):
 			'price': None,
 			'formula': None,
 			'formula_fee_free': None,
-			'result_value': trade_amount,
-			'result_value_fee_free': trade_amount,
+			'result_amount': trade_amount,
+			'result_amount_fee_free': trade_amount,
 			'result_currency': path_data['symbols'][0],
 		})
 
@@ -581,47 +581,116 @@ class UniverseScanner(object):
 				current_step = {
 					'type': None,
 					'pair': None,
-					'price': None,
-					'formula': None,
-					'formula_fee_free': None,
-					'result_value': None,
-					'result_value_fee_free': None,
+					'transactions': [],
+					'result_amount': None,
 					'result_currency': path_data['symbols'][i+1],
 				}
 
 				pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]
-				fee_percent = self.get_fee(pair, exchange_pairs)
-				fee_koef = fee_percent / 100
+				fee_koef = self.get_fee(pair, exchange_pairs) / 100
 				if pair in exchange_pairs:
 					# Buy
-					result_value = 0
-					result_value_fee_free = 0
-					money_left = last_step['result_value']
-					for price, amount in path_data['order_books'][pair]['asks']:
-						needed_amount = money_left / price
-						if needed_amount > amount:
-							result_value += amount * (1 - fee_koef)
-							money_left -= amount * price
+					asks = [v for v in sorted(path_data['order_books'][pair]['asks'], key=lambda v: v[0])]
 
-						if needed_amount <= amount:
-							result_value += needed_amount * (1 - fee_koef)
+					money_left = last_step['result_amount'] * (1 - fee_koef)
+					result_amount = 0
+
+					# from all sellers, buy for the given money
+					current_step['transactions'].append({
+						'type': 'initial',
+						'money_left': money_left,
+						'result_amount': 0.0,
+					})
+					for ask_price, ask_amount in asks:
+						wanted_amount = money_left / ask_price
+
+						# not enough coins available, buy what you can
+						if wanted_amount > ask_amount:
+							result_amount += ask_amount
+							money_left -= ask_amount * ask_price
+
+							current_step['transactions'].append({
+								'type': 'buy',
+								'price': ask_price,
+								'paid': ask_amount * ask_price,
+								'amount': ask_amount,
+								'money_left': money_left,
+								'result_amount': result_amount,
+							})
+
+						# all wanted coins can be bought
+						if wanted_amount <= ask_amount:
+							result_amount += wanted_amount
 							money_left = 0
 
+							current_step['transactions'].append({
+								'type': 'buy',
+								'price': ask_price,
+								'paid': wanted_amount * ask_price,
+								'amount': wanted_amount,
+								'money_left': money_left,
+								'result_amount': result_amount,
+							})
+
+						# no money left, finish
 						if money_left == 0:
 							break
 
+					current_step['type'] = 'buy'
+					current_step['pair'] = pair
+					current_step['result_amount'] = result_amount
+
+				else:
+					# Sell
+					bids = [v for v in sorted(path_data['order_books'][pair]['bids'], key=lambda v: v[0], reverse=True)]
+
+					money_left = last_step['result_amount'] * (1 - fee_koef)
+					result_amount = 0
+
+					# from all sellers, sell for the given money
+					current_step['transactions'].append({
+						'type': 'initial',
+						'money_left': money_left,
+						'result_amount': 0.0,
+					})
+					for bid_price, bid_amount in bids:
+						wanted_amount = money_left / bid_price
+
+						# not enough coins available, buy what you can
+						if wanted_amount > bid_amount:
+							result_amount += bid_amount
+							money_left -= bid_amount * bid_price
+
+							current_step['transactions'].append({
+								'type': 'buy',
+								'price': bid_price,
+								'paid': bid_amount * bid_price,
+								'amount': bid_amount,
+								'money_left': money_left,
+								'result_amount': result_amount,
+							})
+
+						# all wanted coins can be bought
+						if wanted_amount <= bid_amount:
+							result_amount += wanted_amount
+							money_left = 0
+
+							current_step['transactions'].append({
+								'type': 'buy',
+								'price': bid_price,
+								'paid': wanted_amount * bid_price,
+								'amount': wanted_amount,
+								'money_left': money_left,
+								'result_amount': result_amount,
+							})
+
+						# no money left, finish
+						if money_left == 0:
+							break
 
 					current_step['type'] = 'buy'
 					current_step['pair'] = pair
-					current_step['result_value'] = last_step['result_value'] / prices[pair]['ask'] * (1 - fee_koef)
-					current_step['result_value_fee_free'] = last_step['result_value_fee_free'] / prices[pair]['ask']
-				else:
-					# Sell
-					pair = path_data['symbols'][i] + '/' + path_data['symbols'][i+1]
-					current_step['type'] = 'sell'
-					current_step['pair'] = pair
-					current_step['result_value'] = last_step['result_value'] * prices[pair]['bid'] * (1 - fee_koef)
-					current_step['result_value_fee_free'] = last_step['result_value_fee_free'] * prices[pair]['bid']
+					current_step['result_amount'] = result_amount
 
 				path_data['simulation'].append(current_step)
 
