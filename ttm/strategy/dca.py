@@ -48,6 +48,11 @@ class DCA(Strategy):
 			)
 
 			if self.sell(self.pair, sell_amount, ohlcv[4]):
+				self.bot.log(
+					"Selling done. Setting target_value = %f" % (balance - sell_amount) * ohlcv[4],
+					priority=0,
+					extra_values=False
+				)
 				self.save_target_value((balance - sell_amount) * ohlcv[4])
 
 		elif move <= -1*self.minimal_move:
@@ -61,6 +66,11 @@ class DCA(Strategy):
 			)
 
 			if self.buy(self.pair, buy_amount, ohlcv[4]):
+				self.bot.log(
+					"Buying done. Setting target_value = %f" % (balance + buy_amount) * ohlcv[4],
+					priority=0,
+					extra_values=False
+				)
 				self.save_target_value((balance + buy_amount) * ohlcv[4])
 
 	def command(self, chatbot, command: str, args=[]):
