@@ -263,7 +263,7 @@ class Universe(Strategy):
 						path_stats[path_key]['steps'].append('%s: %f / %f = %f' % (path[i+1], value, self.prices[pair], value / self.prices[pair]))
 						value = value / self.prices[pair]
 
-						fee_percent = self.get_fee(pair)
+						fee_percent = self.get_buy_fee(pair)
 						path_stats[path_key]['steps'].append('%s: %f * (1 - %f / 100) = %f' % (path[i+1], value, fee_percent, value * (1 - fee_percent / 100)))
 						fee = value * fee_percent / 100
 						value -= fee
@@ -279,7 +279,7 @@ class Universe(Strategy):
 
 		return path_stats
 
-	def get_fee(self, pair):
+	def get_buy_fee(self, pair):
 		if pair in self.exchange_pairs:
 			info = self.bot.exchange.market(pair)
 			return info['taker'] * 100
@@ -472,7 +472,7 @@ class UniverseScanner(object):
 					}
 
 					pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]
-					fee_percent = self.get_fee(pair, exchange_pairs)
+					fee_percent = self.get_buy_fee(pair, exchange_pairs)
 					fee_koef = fee_percent / 100
 					if pair in exchange_pairs:
 						# Buy
@@ -521,8 +521,8 @@ class UniverseScanner(object):
 		# Return results
 		return paths
 
-	def get_fee(self, pair, exchange_pairs):
-		cache_key = "get_fee-" + pair
+	def get_buy_fee(self, pair, exchange_pairs):
+		cache_key = "get_buy_fee-" + pair
 
 		if cache_key not in self.cache:
 			if pair in exchange_pairs:
@@ -564,12 +564,9 @@ class UniverseScanner(object):
 		path_data['simulation'].append({
 			'type': 'initial',
 			'pair': None,
-			'price': None,
-			'formula': None,
-			'formula_fee_free': None,
+			'transactions': [],
 			'result_amount': trade_amount,
-			'result_amount_fee_free': trade_amount,
-			'result_currency': path_data['symbols'][0],
+			'result_symbol': path_data['symbols'][0],
 		})
 
 		# Go through every currency pair
@@ -583,116 +580,91 @@ class UniverseScanner(object):
 					'pair': None,
 					'transactions': [],
 					'result_amount': None,
-					'result_currency': path_data['symbols'][i+1],
+					'result_symbol': path_data['symbols'][i+1],
 				}
 
 				pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]
-				fee_koef = self.get_fee(pair, exchange_pairs) / 100
+				fee_percent = self.get_buy_fee(pair, exchange_pairs)  # automatically transform into 'sell fee' if necessary
 				if pair in exchange_pairs:
 					# Buy
-					asks = [v for v in sorted(path_data['order_books'][pair]['asks'], key=lambda v: v[0])]
-
-					money_left = last_step['result_amount'] * (1 - fee_koef)
-					result_amount = 0
-
-					# from all sellers, buy for the given money
-					current_step['transactions'].append({
-						'type': 'initial',
-						'money_left': money_left,
-						'result_amount': 0.0,
-					})
-					for ask_price, ask_amount in asks:
-						wanted_amount = money_left / ask_price
-
-						# not enough coins available, buy what you can
-						if wanted_amount > ask_amount:
-							result_amount += ask_amount
-							money_left -= ask_amount * ask_price
-
-							current_step['transactions'].append({
-								'type': 'buy',
-								'price': ask_price,
-								'paid': ask_amount * ask_price,
-								'amount': ask_amount,
-								'money_left': money_left,
-								'result_amount': result_amount,
-							})
-
-						# all wanted coins can be bought
-						if wanted_amount <= ask_amount:
-							result_amount += wanted_amount
-							money_left = 0
-
-							current_step['transactions'].append({
-								'type': 'buy',
-								'price': ask_price,
-								'paid': wanted_amount * ask_price,
-								'amount': wanted_amount,
-								'money_left': money_left,
-								'result_amount': result_amount,
-							})
-
-						# no money left, finish
-						if money_left == 0:
-							break
-
 					current_step['type'] = 'buy'
 					current_step['pair'] = pair
-					current_step['result_amount'] = result_amount
+
+					current_step['transactions'] = self.simulate_buy_transactions(
+						quote=last_step['result_amount'],
+						offers=path_data['order_books'][pair]['asks'],
+						fee_percent=fee_percent
+					)
+
+					current_step['result_amount'] = current_step['transactions'][-1]['result_base']
 
 				else:
 					# Sell
-					bids = [v for v in sorted(path_data['order_books'][pair]['bids'], key=lambda v: v[0], reverse=True)]
-
-					money_left = last_step['result_amount'] * (1 - fee_koef)
-					result_amount = 0
-
-					# from all sellers, sell for the given money
-					current_step['transactions'].append({
-						'type': 'initial',
-						'money_left': money_left,
-						'result_amount': 0.0,
-					})
-					for bid_price, bid_amount in bids:
-						wanted_amount = money_left / bid_price
-
-						# not enough coins available, buy what you can
-						if wanted_amount > bid_amount:
-							result_amount += bid_amount
-							money_left -= bid_amount * bid_price
-
-							current_step['transactions'].append({
-								'type': 'buy',
-								'price': bid_price,
-								'paid': bid_amount * bid_price,
-								'amount': bid_amount,
-								'money_left': money_left,
-								'result_amount': result_amount,
-							})
-
-						# all wanted coins can be bought
-						if wanted_amount <= bid_amount:
-							result_amount += wanted_amount
-							money_left = 0
-
-							current_step['transactions'].append({
-								'type': 'buy',
-								'price': bid_price,
-								'paid': wanted_amount * bid_price,
-								'amount': wanted_amount,
-								'money_left': money_left,
-								'result_amount': result_amount,
-							})
-
-						# no money left, finish
-						if money_left == 0:
-							break
-
-					current_step['type'] = 'buy'
+					pair = path_data['symbols'][i] + '/' + path_data['symbols'][i+1]
+					current_step['type'] = 'sell'
 					current_step['pair'] = pair
-					current_step['result_amount'] = result_amount
+
+					current_step['transactions'] = self.simulate_sell_transactions(
+						base=last_step['result_amount'],
+						offers=path_data['order_books'][pair]['bids'],
+						fee_percent=fee_percent
+					)
+
+					current_step['result_amount'] = result_base
 
 				path_data['simulation'].append(current_step)
 
 		# Finish
 		return path_data['simulation']
+
+	def simulate_buy_transactions(quote:float, offers:list, fee_percent = 0.0):
+		offers = [v for v in sorted(offers, key=lambda v: v[0])]
+		base = 0
+		quote = quote * (1 - fee_percent / 100)
+
+		transactions = []
+		transactions.append({
+			'type': 'initial',
+			'change_base': 0.0,
+			'change_quote': 0.0,
+			'result_base': 0.0,
+			'result_quote': quote,
+		})
+		for ask_price, ask_amount in offers:
+			claimed_base = quote / ask_price
+
+			# not enough base available, buy what you can
+			if claimed_base > ask_amount:
+				base += ask_amount
+				quote -= ask_amount * ask_price
+
+				transactions.append({
+					'type': 'buy',
+					'price': ask_price,
+					'available_amount': ask_amount,
+					'change_base': ask_amount,
+					'change_quote': -1 * ask_amount * ask_price,
+					'result_base': base,
+					'result_quote': quote,
+				})
+
+			# all wanted base can be bought
+			if claimed_base <= ask_amount:
+				base += claimed_base
+				quote = 0
+
+				transactions.append({
+					'type': 'buy',
+					'price': ask_price,
+					'available_amount': ask_amount,
+					'change_base': claimed_base,
+					'change_quote': -1 * claimed_base * ask_price,
+					'result_base': base,
+					'result_quote': quote,
+				})
+
+			# no money left, finish
+			if quote == 0:
+				break
+
+		return transactions
