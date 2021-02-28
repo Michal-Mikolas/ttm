@@ -2,6 +2,7 @@ import ccxt
 from datetime import datetime
 from ttm.strategy import Strategy
 import re
+from pprint import pprint
 
 """
 (This file is part of TTM package)
@@ -48,6 +49,9 @@ class DCA(Strategy):
 			)
 
 			if self.sell(self.pair, sell_amount, ohlcv[4]):
+				pprint(balance)
+				pprint(sell_amount)
+				pprint(ohlcv)
 				self.bot.log(
 					"Selling done. Setting target_value = %f" % (balance - sell_amount) * ohlcv[4],
 					priority=0,
@@ -66,6 +70,9 @@ class DCA(Strategy):
 			)
 
 			if self.buy(self.pair, buy_amount, ohlcv[4]):
+				pprint(balance)
+				pprint(buy_amount)
+				pprint(ohlcv)
 				self.bot.log(
 					"Buying done. Setting target_value = %f" % (balance + buy_amount) * ohlcv[4],
 					priority=0,

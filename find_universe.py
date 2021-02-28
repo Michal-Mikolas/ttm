@@ -44,6 +44,7 @@ trade_amounts = {
     'HKD': 388.0,
 	'JPY': 5330.0,
 	'UAH': 1398.0,
+	'KRW': 50000.0,
 }
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
@@ -116,6 +117,7 @@ while True:
 						'rounds': 0,
 						'result_coef': 1.0,
 						'result_coef_fee_free': 1.0,
+						'simulation_result_coef': 1.0,
 						'pairs_count': len(pairs),
 						'paths_count': 0,
 						'paths': {},
@@ -126,22 +128,28 @@ while True:
 				for path_key, path_info in paths.items():
 					result_coef = path_info['result_amount'] / trade_amount
 					result_coef_fee_free = path_info['result_amount_fee_free'] / trade_amount
+					simulation_result_coef = path_info['simulation'][-1]['result_amount'] / path_info['simulation'][0]['result_amount']
 
-					print(" • %s: %f" % (path_key, result_coef))
+					print(" • %s: %f" % (path_key, simulation_result_coef))
 
 					all_stats[exchange_name]['result_coef'] *= result_coef
 					all_stats[exchange_name]['result_coef_fee_free'] *= result_coef_fee_free
+					all_stats[exchange_name]['simulation_result_coef'] *= simulation_result_coef
 
 					if path_key not in all_stats[exchange_name]['paths']:
 						all_stats[exchange_name]['paths'][path_key] = {
 							'rounds': 0,
 							'result_coef': 1.0,
 							'result_coef_fee_free': 1.0,
-							'datetime': [],
+							'simulation_result_coef': 1.0,
 							'trade_amount': trade_amount,
 							'last_result_amount': None,
 							'last_result_amount_fee_free': None,
 							'last_fees': 0.0,
+							'last_result_coef': None,
+							'last_result_coef_fee_free': None,
+							'last_simulation_result_coef': None,
+							'datetime': [],
 							'steps': [],
 							'simulation': [],
 							'order_books': {},
@@ -150,10 +158,14 @@ while True:
 					all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
 					all_stats[exchange_name]['paths'][path_key]['result_coef'] *= result_coef
 					all_stats[exchange_name]['paths'][path_key]['result_coef_fee_free'] *= result_coef_fee_free
+					all_stats[exchange_name]['paths'][path_key]['simulation_result_coef'] *= simulation_result_coef
 					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 					all_stats[exchange_name]['paths'][path_key]['last_result_amount'] = path_info['result_amount']
 					all_stats[exchange_name]['paths'][path_key]['last_result_amount_fee_free'] = path_info['result_amount_fee_free']
 					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['result_amount_fee_free'] - path_info['result_amount']
+					all_stats[exchange_name]['paths'][path_key]['last_result_coef'] = result_coef
+					all_stats[exchange_name]['paths'][path_key]['last_result_coef_fee_free'] = result_coef_fee_free
+					all_stats[exchange_name]['paths'][path_key]['last_simulation_result_coef'] = simulation_result_coef
 					all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
 					all_stats[exchange_name]['paths'][path_key]['simulation'] = path_info['simulation']
 					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
@@ -161,7 +173,7 @@ while True:
 				all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
 
 				# - save stats
-				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['result_coef'], reverse=True)}
+				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['simulation_result_coef'], reverse=True)}
 				storage.save('all_stats', all_stats)
 
 			except Exception as e:
