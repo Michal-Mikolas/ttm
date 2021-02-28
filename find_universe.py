@@ -33,6 +33,18 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'lakebtc', 'latoken', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex',
 	'poloniex', 'qtrade', 'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit',
 	'timex', 'vcc', 'whitebit', 'xena', 'zb']
+trade_amounts = {
+	'BTC': 0.001,
+	'EUR': 42.0,
+	'USD': 50.0,
+	'USDT': 50.0,
+	'AUD': 65.0,
+	'AQ': 331.0,
+	'QC': 333.0,
+    'HKD': 388.0,
+	'JPY': 5330.0,
+	'UAH': 1398.0,
+}
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
 cache = ttm.storage.JSONFile('cache-universe.json')                     # storage for performance optimalisation
@@ -48,13 +60,10 @@ all_stats = storage.get('all_stats') or {}
 storage.save('all_stats', all_stats)
 
 # Never-ending work...
-trade_amounts = {
-	'BTC': 0.001,
-	'USDT': 50,
-}
 while True:
 	for exchange_name in exchanges:
 		for i in range(1):
+			endpoint = None  ###
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
 
@@ -65,11 +74,15 @@ while True:
 					'enableRateLimit': True,
 				})
 
-				# if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
-				# 	raise Exception("%s doesn't support market orders." % exchange_name)
-
 				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
-				endpoint = ttm.Tools.find_popular_base(pairs)
+				if len(pairs) == 0:
+					raise Exception("Exchange '%s' has no pairs for trade." % exchange_name)
+
+				endpoint = ttm.Tools.find_popular_quote(pairs)
+
+				if endpoint not in trade_amounts:
+					raise Exception("No trade amount for '%s' was specified." % endpoint)
+				trade_amount = trade_amounts[endpoint]
 
 				bot = ttm.bot.Real(
 					exchange,
@@ -89,10 +102,10 @@ while True:
 					pairs,
 					endpoint,
 					path_length=4,
-					min_value_after_fees=1.01,
-					min_bids_count=12,
-					min_asks_count=12,
-					trade_amount=(trade_amounts[endpoint] if endpoint in trade_amounts else None)
+					trade_amount=trade_amount,
+					min_result_after_fees=trade_amount*1.00,
+					min_bids_count=3,
+					min_asks_count=3,
 				)
 
 				# Save results into statistics
@@ -101,7 +114,8 @@ while True:
 				if exchange_name not in all_stats:
 					all_stats[exchange_name] = {
 						'rounds': 0,
-						'value': 100,
+						'result_coef': 1.0,
+						'result_coef_fee_free': 1.0,
 						'pairs_count': len(pairs),
 						'paths_count': 0,
 						'paths': {},
@@ -110,36 +124,44 @@ while True:
 				# - count stats
 				all_stats[exchange_name]['rounds'] += 1
 				for path_key, path_info in paths.items():
-					print(" • %s: %f" % (path_key, path_info['value']))
-					all_stats[exchange_name]['value'] *= path_info['value']
+					result_coef = path_info['result_amount'] / trade_amount
+					result_coef_fee_free = path_info['result_amount_fee_free'] / trade_amount
+
+					print(" • %s: %f" % (path_key, result_coef))
+
+					all_stats[exchange_name]['result_coef'] *= result_coef
+					all_stats[exchange_name]['result_coef_fee_free'] *= result_coef_fee_free
 
 					if path_key not in all_stats[exchange_name]['paths']:
 						all_stats[exchange_name]['paths'][path_key] = {
 							'rounds': 0,
-							'value': 100,
-							'value_fee_free': 100,
+							'result_coef': 1.0,
+							'result_coef_fee_free': 1.0,
 							'datetime': [],
-							'last_value': 100,
-							'last_value_fee_free': 100,
+							'trade_amount': trade_amount,
+							'last_result_amount': None,
+							'last_result_amount_fee_free': None,
 							'last_fees': 0.0,
 							'steps': [],
+							'simulation': [],
 							'order_books': {},
 						}
 
 					all_stats[exchange_name]['paths'][path_key]['rounds'] += 1
-					all_stats[exchange_name]['paths'][path_key]['value'] *= path_info['value']
-					all_stats[exchange_name]['paths'][path_key]['value_fee_free'] *= path_info['value_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['result_coef'] *= result_coef
+					all_stats[exchange_name]['paths'][path_key]['result_coef_fee_free'] *= result_coef_fee_free
 					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-					all_stats[exchange_name]['paths'][path_key]['last_value'] = path_info['value']
-					all_stats[exchange_name]['paths'][path_key]['last_value_fee_free'] = path_info['value_fee_free']
-					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['value_fee_free'] - path_info['value']
+					all_stats[exchange_name]['paths'][path_key]['last_result_amount'] = path_info['result_amount']
+					all_stats[exchange_name]['paths'][path_key]['last_result_amount_fee_free'] = path_info['result_amount_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['result_amount_fee_free'] - path_info['result_amount']
 					all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
+					all_stats[exchange_name]['paths'][path_key]['simulation'] = path_info['simulation']
 					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
 
 				all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
 
 				# - save stats
-				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['value'], reverse=True)}
+				all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['result_coef'], reverse=True)}
 				storage.save('all_stats', all_stats)
 
 			except Exception as e:
@@ -147,5 +169,8 @@ while True:
 				if exchange_name not in exceptions:
 					exceptions[exchange_name] = []
 
-				exceptions[exchange_name] = type(e).__name__ + ': ' + str(e)[0:255]
+				exception_message = "%s: %s" % (type(e).__name__, str(e)[0:255])
+				if exception_message not in exceptions[exchange_name]:
+					exceptions[exchange_name].append(exception_message)
+
 				storage.save('exceptions', exceptions)

@@ -47,7 +47,7 @@ class Tools(object):
 				pairs.pop(pair)
 				continue
 
-			if not info['ticker']['bid'] or not info['ticker']['ask']:
+			if (not info['ticker']['bid'] or not info['ticker']['ask']) and not info['ticker']['last']:
 				pairs.pop(pair)
 				continue
 
@@ -82,7 +82,7 @@ class Tools(object):
 
 		return pairs
 
-	def find_popular_base(pairs):
+	def find_popular_quote(pairs):
 		counter = {}
 		for pair in pairs:
 			pair = pair.split('/')

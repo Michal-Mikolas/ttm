@@ -102,9 +102,24 @@ class DCA(Strategy):
 
 	def buy(self, pair, amount, price):
 		try:
+			self.bot.log(
+				"/dca/buy: Buying %f of %s for price %f" % (amount, pair, price),
+				priority=0,
+				extra_values=False
+			)
 			self.bot.buy(pair, amount, price)
+			self.bot.log(
+				"/dca/buy: Buy order sent.",
+				priority=0,
+				extra_values=False
+			)
 
 			self.error_sent = False
+			self.bot.log(
+				"/dca/buy: returning True.",
+				priority=0,
+				extra_values=False
+			)
 			return True
 
 		except ccxt.InvalidOrder as e:
@@ -121,9 +136,24 @@ class DCA(Strategy):
 
 	def sell(self, pair, amount, price):
 		try:
+			self.bot.log(
+				"/dca/sell: Selling %f of %s for price %f" % (amount, pair, price),
+				priority=0,
+				extra_values=False
+			)
 			self.bot.sell(pair, amount, price)
+			self.bot.log(
+				"/dca/sell: Sell order sent.",
+				priority=0,
+				extra_values=False
+			)
 
 			self.error_sent = False
+			self.bot.log(
+				"/dca/sell: returning True.",
+				priority=0,
+				extra_values=False
+			)
 			return True
 
 		except ccxt.InvalidOrder as e:
