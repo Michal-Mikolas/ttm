@@ -33,6 +33,10 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'lakebtc', 'latoken', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex',
 	'poloniex', 'qtrade', 'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit',
 	'timex', 'vcc', 'whitebit', 'xena', 'zb']
+exchanges = ['stex', 'gopax', 'gemini', 'southxchange', 'timex', 'ice3x', 'gateio',
+	'lbank', 'latoken', 'bw', 'bigone', 'aofex', 'bittrex', 'binanceus', 'bitfinex',
+	'coinex', 'whitebit', 'bitvavo', 'bequant', 'oceanex', 'huobijp', 'hitbtc', 'ftx',
+	'cex', 'bitkk']
 trade_amounts = {
 	'BTC': 0.001,
 	'EUR': 42.0,

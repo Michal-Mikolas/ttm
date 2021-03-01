@@ -43,7 +43,6 @@ class Statistics(Logger):
 		self.add('price', values['price'])
 		self.add('balance1', values['balance1'])
 		self.add('balance2', values['balance2'])
-		self.add('relative_balance2', values['relative_balance2'])
 		self.add('value1', values['value1'])
 		self.add('total_value', values['total_value'])
 
@@ -65,7 +64,6 @@ class Statistics(Logger):
 		return {
 			'price': 'Price',
 			'balance2': 'Cash balance',
-			'relative_balance2': 'Risk cash balance',
 			'value1': 'Crypto value',
 			'total_value': 'Total value',
 		}
@@ -164,7 +162,13 @@ class Statistics(Logger):
 				writer = csv.writer(file)
 
 				# Prepare headers
-				headers = ['Name', 'Open', 'High', 'Low', 'Close', '10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', 'Change / Month', 'Change / Year', '% / Month', '% / Year', 'Strategy', 'Exchange', 'From', 'To', 'Note']
+				headers = ['Exchange', 'Strategy', 'From', 'To', 'Note',
+					'TotalValue / Month', 'TotalValue / Year', 'TotalValue % / Month', 'TotalValue % / Year',
+					'TotalValue Open', 'TotalValue 0p', 'TotalValue 10p', 'TotalValue 90p', 'TotalValue 100p', 'TotalValue Close',
+					'Price Open', 'Price 0p', 'Price 10p', 'Price 20p', 'Price 80p', 'Price 90p', 'Price 100p', 'Price Close',
+					'Balance1 Open', 'Balance1 0p', 'Balance1 100p', 'Balance1 Close',
+					'Balance2 Open', 'Balance2 0p', 'Balance2 10p', 'Balance2 20p', 'Balance2 30p', 'Balance2 50p', 'Balance2 70p', 'Balance2 80p', 'Balance2 90p', 'Balance2 100p', 'Balance2 Close',
+				]
 
 				writer.writerow(headers)
 
@@ -176,30 +180,51 @@ class Statistics(Logger):
 			years = (self.data['date'][-1] - self.data['date'][0]).days / 365
 
 			# Write to file
-			for key, name in self.get_metrics().items():
-				writer.writerow([
-					name,
-					self.data[key][0],
-					self.get_max(key),
-					self.get_min(key),
-					self.data[key][-1],
-					self.get_percentil(key, 10),
-					self.get_percentil(key, 20),
-					self.get_percentil(key, 30),
-					self.get_percentil(key, 50),
-					self.get_percentil(key, 70),
-					self.get_percentil(key, 80),
-					self.get_percentil(key, 90),
-					(self.data[key][-1] - self.data[key][0]) / months,
-					(self.data[key][-1] - self.data[key][0]) / years,
-					(self.data[key][-1] - self.data[key][0]) / months / (self.data[key][-1] - self.get_min(key)) * 100,
-					(self.data[key][-1] - self.data[key][0]) / years / (self.data[key][-1] - self.get_min(key)) * 100,
-					type(self.bot.strategy).__name__,
-					type(self.bot.exchange).__name__,
-					self.get_results_date_from(),
-					self.get_results_date_to(),
-					self.export_results['note'],
-				])
+			writer.writerow([
+				type(self.bot.exchange).__name__,
+				type(self.bot.strategy).__name__,
+				self.get_results_date_from(),
+				self.get_results_date_to(),
+				self.export_results['note'],
+
+				(self.data['total_value'][-1] - self.data['total_value'][0]) / months,
+				(self.data['total_value'][-1] - self.data['total_value'][0]) / years,
+				(self.data['total_value'][-1] - self.data['total_value'][0]) / months / (self.data['total_value'][-1] - self.get_min('total_value')) * 100,
+				(self.data['total_value'][-1] - self.data['total_value'][0]) / years / (self.data['total_value'][-1] - self.get_min('total_value')) * 100,
+
+				self.data['total_value'][0],
+				self.get_min('total_value'),
+				self.get_percentil('total_value', 10),
+				self.get_percentil('total_value', 90),
+				self.get_max('total_value'),
+				self.data['total_value'][-1],
+
+				self.data['price'][0],
+				self.get_min('price'),
+				self.get_percentil('price', 10),
+				self.get_percentil('price', 20),
+				self.get_percentil('price', 80),
+				self.get_percentil('price', 90),
+				self.get_max('price'),
+				self.data['price'][-1],
+
+				self.data['balance1'][0],
+				self.get_min('balance1'),
+				self.get_max('balance1'),
+				self.data['balance1'][-1],
+
+				self.data['balance2'][0],
+				self.get_min('balance2'),
+				self.get_percentil('balance2', 10),
+				self.get_percentil('balance2', 20),
+				self.get_percentil('balance2', 30),
+				self.get_percentil('balance2', 50),
+				self.get_percentil('balance2', 70),
+				self.get_percentil('balance2', 80),
+				self.get_percentil('balance2', 90),
+				self.get_max('balance2'),
+				self.data['balance2'][-1],
+			])
 
 		self.clean_file(self.export_results['file'])
 

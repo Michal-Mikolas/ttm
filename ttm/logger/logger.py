@@ -32,24 +32,13 @@ class Logger():
 				balance1 = bot.get_balance(currency1)
 				balance2 = bot.get_balance(currency2)
 
-				# Relative balance
-				last_balance2 = bot.storage.get('logger_last_balance2') or balance2
-				balance2_change = balance2 - last_balance2
-				last_relative_balance2 = bot.storage.get('logger_last_relative_balance2') or 0.0
-				relative_balance2 = last_relative_balance2 + balance2_change
-				relative_balance2 = relative_balance2 if relative_balance2 < 0.0 else 0.0
-
 				values.update({
 					'price':             price,
 					'balance1':          balance1,
 					'balance2':          balance2,
-					'relative_balance2': relative_balance2,
 					'value1':            balance1 * price,
 					'total_value':       balance1 * price + balance2,
 				})
-
-				bot.storage.save('logger_last_balance2', balance2)
-				bot.storage.save('logger_last_relative_balance2', relative_balance2)
 
 		# Extra values
 		if extra_values:

@@ -53,7 +53,7 @@ class DCA(Strategy):
 				pprint(sell_amount)
 				pprint(ohlcv)
 				self.bot.log(
-					"Selling done. Setting target_value = %f" % (balance - sell_amount) * ohlcv[4],
+					"Selling done. Setting target_value = %f" % ((balance - sell_amount) * ohlcv[4]),
 					priority=0,
 					extra_values=False
 				)
@@ -74,7 +74,7 @@ class DCA(Strategy):
 				pprint(buy_amount)
 				pprint(ohlcv)
 				self.bot.log(
-					"Buying done. Setting target_value = %f" % (balance + buy_amount) * ohlcv[4],
+					"Buying done. Setting target_value = %f" % ((balance + buy_amount) * ohlcv[4]),
 					priority=0,
 					extra_values=False
 				)
