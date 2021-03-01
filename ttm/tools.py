@@ -82,7 +82,7 @@ class Tools(object):
 
 		return pairs
 
-	def find_popular_quote(pairs):
+	def find_popular_quote(pairs, index=0):
 		counter = {}
 		for pair in pairs:
 			pair = pair.split('/')
@@ -92,10 +92,10 @@ class Tools(object):
 
 			counter[pair[1]] += 1
 
-		counter = {k:counter[k] for k in sorted(counter, key=counter.get)}
+		counter = {k:counter[k] for k in sorted(counter, key=counter.get, reverse=True)}
 
 		if len(counter):
-			return list(counter.keys())[-1]
+			return list(counter.keys())[index]
 
 		else:
 			return None

@@ -20,9 +20,9 @@ exchange = ccxt.binance({'enableRateLimit': True})
 strategy = ttm.strategy.DCA(
 	pair='BTC/USDT',
 	initial_target_value=100,  # USD
-	minimal_move=4.9,          # percent
-	tick_period=60*60,
-	timeframe='1h',
+	minimal_move=5.1,          # percent
+	tick_period=5*60,
+	timeframe='5m',
 	sell_modifier=1.00,  #0.9778421,
 	buy_modifier=1.00,  #1.0221579,
 )
@@ -34,7 +34,7 @@ logger = ttm.logger.Multi(
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 	ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 		'file': 'output/results.csv',
-		'note': 'minimal_move=4.9, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=100, pair=BTC/USDT, tick_period=60*60, timeframe=1h',
+		'note': 'minimal_move=5.1, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=100, pair=BTC/USDT, tick_period=5*60, timeframe=5m',
 	}),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )

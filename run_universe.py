@@ -8,24 +8,19 @@ from pprint import pprint
 #
 data_folder = 'output/universe'
 
-# binance,bitmex,okex,bitfinex,zb,acx,aofex,bequant,bibox,bigone,binanceus,
-#   bitfinex,bitget,bithumb,bitkk,bitpanda,bitz,bleutrade,braziliex,bw,bybit,
-#   cdax,coincheck,coinex,coinfalcon,coinfloor,coingi,coinmarketcap,coinone,
-#   coinspot,currencycom,
-# bit2c!,bitbank!,bitbay!,bitflyer!,bitforex!,bitmax!,bitso!,bitstamp!,bl3p!,
-#   btcalpha!,btcbox!,btcmarkets!,btctradeua!,btcturk!,buda!,bytetrade!,
-#   chilebit!,coinbase!,coinbaseprime!,coinbasepro!,coinegg!,coinmate!,crex24!,
-# bitvavo,bitmart,coinex,hitbtc,bittrex,cex,
-exchange = ccxt.bitvavo({
-	'enableRateLimit': True,
+exchange = ccxt.bittrex({
+    'enableRateLimit': False,
+   	'apiKey': keyring.get_password('bittrex', 'apiKey'),
+    'secret': keyring.get_password('bittrex', 'secret'),
 })
-pairs = ttm.Tools.get_pairs(exchange) ; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
+pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
 strategy = ttm.strategy.Universe(
+	endpoint='BTC',
 	exchange_pairs=pairs,
-	target=ttm.Tools.find_popular_base(pairs),
-	minimal_profit=1.0,  # percent
+	minimal_value=1.005,
 	path_length=4,
-	tick_period=10,
+	tick_period=1,
+	limits={'BTC': 0.0008}
 )
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data
@@ -35,7 +30,6 @@ logger = ttm.logger.Multi(
 	ttm.logger.Console(min_priority=0),
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 	ttm.logger.CSVFile(data_folder + '/log-all.csv', min_priority=0),
-	# ttm.logger.CSVFile('C:/Users/mikolas/Google Drive/sync/ttm-log.csv', min_priority=0),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 	# ttm.logger.Telegram(
 	# 	token=keyring.get_password('telegram', 'chatbotToken'),        # secures the Telegram bot

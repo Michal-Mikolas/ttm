@@ -1,8 +1,6 @@
 from typing import List
-import ccxt
 from datetime import datetime
 from ttm.strategy import Strategy
-import re
 from pprint import pprint
 
 """
@@ -12,6 +10,15 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
+
+#     #
+#     # #    # # #    # ###### #####   ####  ######
+#     # ##   # # #    # #      #    # #      #
+#     # # #  # # #    # #####  #    #  ####  #####
+#     # #  # # # #    # #      #####       # #
+#     # #   ## #  #  #  #      #   #  #    # #
+ #####  #    # #   ##   ###### #    #  ####  ######
+
 class Universe(Strategy):
 
 	###
@@ -23,20 +30,26 @@ class Universe(Strategy):
 	### #    # #   #
 
 	def __init__(self,
-		target: str,
+		endpoint: str,
 		exchange_pairs: List,
-		minimal_profit=1.01,
+		minimal_value=1.01,
 		path_length=4,
-		tick_period=5
+		tick_period=5,
+		limits={},
+		min_bids_count=3,
+		min_asks_count=3,
 	):
 		super().__init__()
 
 		# Config
-		self.target = target
+		self.endpoint = endpoint
 		self.exchange_pairs = self.parse_pairs(exchange_pairs)
-		self.minimal_profit = minimal_profit  # percent
+		self.minimal_value = minimal_value  # percent
 		self.path_length = path_length
-		self.tick_period = tick_period        # seconds
+		self.tick_period = tick_period      # seconds
+		self.limits = limits
+		self.min_bids_count = min_bids_count
+		self.min_asks_count = min_asks_count
 
 		self.scanner = UniverseScanner()
 
@@ -61,7 +74,63 @@ class Universe(Strategy):
 	   #    #  ####  #    #
 
 	def tick(self):
-		pass
+		#
+		# Prepare
+		#
+		trade_amount = self.get_trade_amount(self.endpoint, self.limits)
+
+		#
+		# Scan for available paths
+		#
+		paths = self.scanner.full_scan(
+			exchange_pairs        = self.exchange_pairs,
+			endpoint              = self.endpoint,
+			path_length           = self.path_length,
+			trade_amount          = trade_amount,
+			min_result_after_fees = trade_amount * self.minimal_value,
+			min_bids_count        = self.min_bids_count,
+			min_asks_count        = self.min_asks_count,
+		)
+
+		if len(paths):
+			paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['simulation'][-1]['result_amount'], reverse=True)}
+			path = paths[0]
+
+			#
+			# Let's make simulation real
+			#
+			for i, step in path['simulation'].items():
+				if step['type'] == 'buy':
+					pair = step['pair']
+					amount = self.get_trade_amount(step['result_symbol'], self.limits)
+					price = step['transactions'][-1]['price']
+
+					self.bot.buy(pair, amount, price)
+
+					self.wait_for_orders(pair=pair, type='buy')
+
+				if step['type'] == 'sell':
+					pair = step['pair']
+					amount = self.get_trade_amount(step['result_symbol'], self.limits)
+					price = step['transactions'][-1]['price']
+
+					self.bot.sell(pair, amount, price)
+
+					self.wait_for_orders(pair=pair, type='sell')
+
+			#
+			# Print the results
+			#
+
+			# TODO
+
+
+	def get_trade_amount(self, symbol, limits = {}):
+		trade_amount = self.bot.get_balance(symbol)
+		if (symbol in limits) and (trade_amount > limits[symbol]):
+			trade_amount = limits[self.endpoint]
+
+		return trade_amount
 
 
 
