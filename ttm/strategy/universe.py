@@ -1,5 +1,6 @@
 from typing import List
 from datetime import datetime
+import time
 from ttm.strategy import Strategy
 from pprint import pprint
 
@@ -10,6 +11,8 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
+
+
 
 #     #
 #     # #    # # #    # ###### #####   ####  ######
@@ -38,6 +41,7 @@ class Universe(Strategy):
 		limits={},
 		min_bids_count=3,
 		min_asks_count=3,
+		order_timeout=10,
 	):
 		super().__init__()
 
@@ -50,6 +54,7 @@ class Universe(Strategy):
 		self.limits = limits
 		self.min_bids_count = min_bids_count
 		self.min_asks_count = min_asks_count
+		self.order_timeout = order_timeout
 
 		self.scanner = UniverseScanner()
 
@@ -77,7 +82,8 @@ class Universe(Strategy):
 		#
 		# Prepare
 		#
-		trade_amount = self.get_trade_amount(self.endpoint, self.limits)
+		balance_before = self.bot.get_balance(self.endpoint)
+		trade_amount = self.limit(balance_before, self.endpoint)
 
 		#
 		# Scan for available paths
@@ -93,44 +99,124 @@ class Universe(Strategy):
 		)
 
 		if len(paths):
-			paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['simulation'][-1]['result_amount'], reverse=True)}
-			path = paths[0]
+			# Find the most profitable path
+			path_key = max(paths, key=lambda k: paths[k]['simulation'][-1]['result_amount'])
+			path_data = paths[path_key]
+			expected_value = path_data['simulation'][-1]['result_amount'] / path_data['simulation'][0]['result_amount']
+
+			self.bot.log(
+				"Found path %s, expected value: %f" % (path_key, expected_value),
+				priority=1,
+				extra_values=False
+			)
 
 			#
-			# Let's make simulation real
+			# Let's realize the simulation
 			#
-			for i, step in path['simulation'].items():
+			for step in path_data['simulation']:
+				if step['type'] == 'initial':
+					continue
+
+				# Prepare
+				pair_str = step['pair']
+				pair = pair_str.split('/')
+
+				best_price = step['transactions'][1]['price']
+				worst_price = step['transactions'][-1]['price']
+				self.bot.log(
+					"Price (best / worse): %f / %f" % (best_price, worst_price),
+					priority=1,
+					extra_values=False
+				)
+
+				# Buy
 				if step['type'] == 'buy':
-					pair = step['pair']
-					amount = self.get_trade_amount(step['result_symbol'], self.limits)
-					price = step['transactions'][-1]['price']
+					balance = self.bot.get_balance(pair[1])
+					self.bot.log(
+						"%s balance: %f" % (pair[1], balance),
+						priority=1,
+						extra_values=False
+					)
+					quote = self.limit(
+						balance,
+						pair[1]
+					)
+					base = quote / best_price
 
-					self.bot.buy(pair, amount, price)
+					self.bot.log(
+						"Buying %s; Base: %f; Quote: %f; Price: %f" % (pair_str, base, quote, worst_price),
+						priority=1,
+						extra_values=False
+					)
+					self.bot.buy(pair_str, base, worst_price)
 
-					self.wait_for_orders(pair=pair, type='buy')
+					self.wait_for_orders(pair_str)
 
+				# Sell
 				if step['type'] == 'sell':
-					pair = step['pair']
-					amount = self.get_trade_amount(step['result_symbol'], self.limits)
-					price = step['transactions'][-1]['price']
+					balance = self.bot.get_balance(pair[0])
+					self.bot.log(
+						"%s balance: %f" % (pair[0], balance),
+						priority=1,
+						extra_values=False
+					)
+					base = self.limit(
+						balance,
+						pair[0]
+					)
 
-					self.bot.sell(pair, amount, price)
+					self.bot.log(
+						"Selling %s; Base: %f; Price: %f" % (pair_str, base, worst_price),
+						priority=1,
+						extra_values=False
+					)
+					self.bot.sell(pair_str, base, worst_price)
 
-					self.wait_for_orders(pair=pair, type='sell')
+					self.wait_for_orders(pair_str)
 
 			#
-			# Print the results
+			# Log the results
 			#
+			balance_after = self.bot.get_balance(self.endpoint)
+			self.bot.log(
+				"%s finished; Coef expected / real: %f / %f; Balance before / after: %f / %f" % (
+					path_key,
+					expected_value,
+					balance_after / balance_before,
+					balance_before,
+					balance_after,
+				),
+				priority=2,
+				extra_values=False
+			)
+			self.bot.storage.save(
+				datetime.now().strftime('%Y-%m-%d %H:%M:%S', {
+					'path_key': path_key,
+					'balance_before': balance_before,
+					'balance_after': balance_after,
+					'path_data': path_data,
+				})
+			)
 
-			# TODO
+	def limit(self, amount, symbol):
+		if (symbol in self.limits) and (amount > self.limits[symbol]):
+			amount = self.limits[self.endpoint]
+
+		return amount
+
+	def wait_for_orders(self, pair: str, since=None, limit=None):
+		for i in range(self.order_timeout):
+			orders = self.bot.get_open_orders(pair, since, limit)
+			if len(orders) == 0:
+				time.sleep(1)  ###
+				return True
+
+			time.sleep(1)
+
+		raise TimeoutError("Order %s not closed after %d seconds." % (pair, self.order_timeout))
 
 
-	def get_trade_amount(self, symbol, limits = {}):
-		trade_amount = self.bot.get_balance(symbol)
-		if (symbol in limits) and (trade_amount > limits[symbol]):
-			trade_amount = limits[self.endpoint]
 
-		return trade_amount
 
 
 
@@ -413,6 +499,7 @@ class UniverseScanner(object):
 			'transactions': [],
 			'result_amount': trade_amount,
 			'result_symbol': path_data['symbols'][0],
+			'worst_result_amount': trade_amount,
 		})
 
 		# Go through every currency pair
@@ -427,6 +514,7 @@ class UniverseScanner(object):
 					'transactions': [],
 					'result_amount': None,
 					'result_symbol': path_data['symbols'][i+1],
+					'worst_result_amount': None,
 				}
 
 				pair = path_data['symbols'][i+1] + '/' + path_data['symbols'][i]

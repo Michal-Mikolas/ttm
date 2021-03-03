@@ -34,6 +34,9 @@ class Bot():
 	def get_balance(self, symbol):
 		pass
 
+	def get_open_orders(self, symbol: str, since=None, limit=None):
+		pass
+
 	def get_ticker(self, pairs):
 		pass
 

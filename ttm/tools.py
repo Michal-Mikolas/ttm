@@ -57,7 +57,12 @@ class Tools(object):
 				continue
 
 			# Filter: Only 'spot' markets
-			if info['market'] and ('type' in market) and (market['type'] != 'spot'):
+			if info['market'] and ('type' in info['market']) and (info['market']['type'] != 'spot'):
+				pairs.pop(pair)
+				continue
+
+			# Filter: Bittrex tokenized stocks are banned from normal trading
+			if info['market'] and ('tags' in info['market']['info']) and ('TOKENIZED_SECURITY' in info['market']['info']['tags']):
 				pairs.pop(pair)
 				continue
 

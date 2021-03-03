@@ -129,10 +129,10 @@ while True:
 
 				# - count stats
 				all_stats[exchange_name]['rounds'] += 1
-				for path_key, path_info in paths.items():
-					result_coef = path_info['result_amount'] / trade_amount
-					result_coef_fee_free = path_info['result_amount_fee_free'] / trade_amount
-					simulation_result_coef = path_info['simulation'][-1]['result_amount'] / path_info['simulation'][0]['result_amount']
+				for path_key, path_data in paths.items():
+					result_coef = path_data['result_amount'] / trade_amount
+					result_coef_fee_free = path_data['result_amount_fee_free'] / trade_amount
+					simulation_result_coef = path_data['simulation'][-1]['result_amount'] / path_data['simulation'][0]['result_amount']
 
 					print(" • %s: %f" % (path_key, simulation_result_coef))
 
@@ -164,15 +164,15 @@ while True:
 					all_stats[exchange_name]['paths'][path_key]['result_coef_fee_free'] *= result_coef_fee_free
 					all_stats[exchange_name]['paths'][path_key]['simulation_result_coef'] *= simulation_result_coef
 					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-					all_stats[exchange_name]['paths'][path_key]['last_result_amount'] = path_info['result_amount']
-					all_stats[exchange_name]['paths'][path_key]['last_result_amount_fee_free'] = path_info['result_amount_fee_free']
-					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_info['result_amount_fee_free'] - path_info['result_amount']
+					all_stats[exchange_name]['paths'][path_key]['last_result_amount'] = path_data['result_amount']
+					all_stats[exchange_name]['paths'][path_key]['last_result_amount_fee_free'] = path_data['result_amount_fee_free']
+					all_stats[exchange_name]['paths'][path_key]['last_fees'] = path_data['result_amount_fee_free'] - path_data['result_amount']
 					all_stats[exchange_name]['paths'][path_key]['last_result_coef'] = result_coef
 					all_stats[exchange_name]['paths'][path_key]['last_result_coef_fee_free'] = result_coef_fee_free
 					all_stats[exchange_name]['paths'][path_key]['last_simulation_result_coef'] = simulation_result_coef
-					all_stats[exchange_name]['paths'][path_key]['steps'] = path_info['steps']
-					all_stats[exchange_name]['paths'][path_key]['simulation'] = path_info['simulation']
-					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_info['order_books']
+					all_stats[exchange_name]['paths'][path_key]['steps'] = path_data['steps']
+					all_stats[exchange_name]['paths'][path_key]['simulation'] = path_data['simulation']
+					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_data['order_books']
 
 				all_stats[exchange_name]['paths_count'] = len(all_stats[exchange_name]['paths'])
 

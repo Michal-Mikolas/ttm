@@ -65,6 +65,9 @@ class Real(Bot):
 		else:
 			return 0.0
 
+	def get_open_orders(self, symbol: str, since=None, limit=None):
+		return self.exchange.fetchOpenOrders(symbol, since, limit)
+
 	def get_tickers(self, pairs):
 		return self.exchange.fetch_tickers(pairs)
 
@@ -97,9 +100,10 @@ class Real(Bot):
 					self.log('tick...', priority=0)
 					self.strategy.tick()
 
-			except (ccxt.RequestTimeout, ccxt.NetworkError, ProtocolError):
+			except (ccxt.RequestTimeout, ccxt.NetworkError, ProtocolError) as e:
 				try:
-					self.log('network error...', priority=0, extra_values=False)
+					exception_message = "network error... %s: %s" % (type(e).__name__, str(e)[0:255])
+					self.log(exception_message, priority=0, extra_values=False)
 				except:
 					pass
 
@@ -112,6 +116,7 @@ class Real(Bot):
 					)
 				except:
 					pass
+
 				time.sleep(self.strategy.tick_period)
 
 	def __del__(self):
