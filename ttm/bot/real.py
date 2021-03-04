@@ -29,22 +29,34 @@ class Real(Bot):
 		self.chatbot = chatbot
 		self.chatbot.set_bot(self)
 
-	def buy(self, pair, amount, price: float):
+	def buy(self, pair: str, amount: float = None, price: float = None, cost: float = None):
+		if amount and price:
+			return self.buy_limit(pair, amount, price)
+
+		if cost:
+			return self.buy_market(cost=cost)
+
+		raise Exception("Can't place buy order with given parameters.")
+
+	def buy_limit(self, pair: str, amount: float, price: float):
 		self.exchange.create_order(pair, 'limit', 'buy', amount, price)
 
-		currencies = self.split_pair(pair)
+		symbols = self.split_pair(pair)
 		self.log(
-			'Bought {:f} {:s}'.format(amount, currencies[0]),
+			'Bought {:f} {:s} (limit)'.format(amount, symbols[0]),
 			priority=2
 		)
 
-		# if self.exchange.has['createMarketOrder']:
-		# 	self.exchange.create_order(pair, 'market', 'buy', amount, price)
-		# 	# alternative? exchange: 'options': 'create_market_buy_orderRequiresPrice': false}
-		# 	# self.exchange.create_market_buy_order(pair, price * amount)
-		# else:
-		# 	self.exchange.create_order(pair, 'limit', 'buy', amount, price)
-		# 	# self.exchange.create_limit_buy_order(pair, amount, price)
+	def buy_market(self, pair: str, cost: float):
+		self.exchange.options['createMarketBuyOrderRequiresPrice'] = False
+
+		self.exchange.create_market_buy_order(pair, cost)
+
+		symbols = self.split_pair(pair)
+		self.log(
+			'Bought {:s} for {:f} {:s} (market)'.format(symbols[0], cost, symbols[1]),
+			priority=2
+		)
 
 	def sell(self, pair, amount, price: float):
 		self.exchange.create_order(pair, 'limit', 'sell', amount, price)

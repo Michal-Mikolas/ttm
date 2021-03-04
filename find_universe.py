@@ -8,6 +8,7 @@ from pprint import pprint
 #
 data_folder = 'output/find_universe'
 
+# all
 exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'binanceus',
 	'bit2c', 'bitbank', 'bitbay', 'bitcoincom', 'bitfinex', 'bitfinex2', 'bitflyer',
 	'bitforex', 'bitget', 'bithumb', 'bitkk', 'bitmart', 'bitmax', 'bitmex', 'bitpanda',
@@ -24,6 +25,7 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
 	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
 	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
+# able to fetch all tickers
 exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'bitcoincom', 'bitfinex', 'bitfinex2', 'bitget', 'bithumb', 'bitkk', 'bitmart',
 	'bitmex', 'bitpanda', 'bittrex', 'bitvavo', 'bitz', 'bleutrade', 'braziliex', 'bw',
@@ -33,10 +35,16 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'lakebtc', 'latoken', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex',
 	'poloniex', 'qtrade', 'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit',
 	'timex', 'vcc', 'whitebit', 'xena', 'zb']
+# with possible opportunities
 exchanges = ['stex', 'gopax', 'gemini', 'southxchange', 'timex', 'ice3x', 'gateio',
 	'lbank', 'latoken', 'bw', 'bigone', 'aofex', 'bittrex', 'binanceus', 'bitfinex',
 	'coinex', 'whitebit', 'bitvavo', 'bequant', 'oceanex', 'huobijp', 'hitbtc', 'ftx',
 	'cex', 'bitkk']
+# able to do market orders
+exchanges = ['gopax', 'southxchange', 'timex', 'ice3x', 'lbank', 'bigone', 'aofex',
+	'bittrex', 'binanceus', 'bitfinex', 'coinex', 'bitvavo', 'bequant', 'oceanex',
+	'huobijp', 'hitbtc', 'ftx', 'cex']
+
 trade_amounts = {
 	'BTC': 0.001,
 	'EUR': 42.0,
@@ -67,7 +75,7 @@ storage.save('all_stats', all_stats)
 # Never-ending work...
 while True:
 	for exchange_name in exchanges:
-		for i in range(1):
+		for i in range(5):
 			endpoint = None  ###
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
@@ -76,8 +84,11 @@ while True:
 				# 1) Prepare everything
 				#
 				exchange = ttm.Tools.get_class('ccxt.' + exchange_name)({
-					'enableRateLimit': True,
+					'enableRateLimit': False,
 				})
+
+				if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
+					raise Exception("%s doesn't support market orders." % exchange_name)
 
 				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
 				if len(pairs) == 0:
@@ -93,7 +104,7 @@ while True:
 					exchange,
 					ttm.strategy.Universe(
 						exchange_pairs=pairs,
-						target=endpoint,
+						endpoint=endpoint,
 					),
 					storage,
 					cache,

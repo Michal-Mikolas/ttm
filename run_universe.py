@@ -17,10 +17,12 @@ pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; pri
 strategy = ttm.strategy.Universe(
 	endpoint='BTC',
 	exchange_pairs=pairs,
+	executor=ttm.strategy.universe.MarketExecutor(
+		limits={'BTC': 0.001},
+	),
 	minimal_value=1.00,
 	path_length=4,
-	tick_period=999,
-	limits={'BTC': 0.001}
+	tick_period=1,
 )
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data

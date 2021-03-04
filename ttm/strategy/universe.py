@@ -35,10 +35,10 @@ class Universe(Strategy):
 	def __init__(self,
 		endpoint: str,
 		exchange_pairs: List,
+		executor,
 		minimal_value=1.01,
 		path_length=4,
 		tick_period=5,
-		limits={},
 		min_bids_count=3,
 		min_asks_count=3,
 		order_timeout=10,
@@ -48,10 +48,10 @@ class Universe(Strategy):
 		# Config
 		self.endpoint = endpoint
 		self.exchange_pairs = self.parse_pairs(exchange_pairs)
+		self.executor = executor
 		self.minimal_value = minimal_value  # percent
 		self.path_length = path_length
 		self.tick_period = tick_period      # seconds
-		self.limits = limits
 		self.min_bids_count = min_bids_count
 		self.min_asks_count = min_asks_count
 		self.order_timeout = order_timeout
@@ -60,6 +60,7 @@ class Universe(Strategy):
 
 	def set_bot(self, bot):
 		super().set_bot(bot)
+		self.executor.set_bot(bot)
 		self.scanner.set_bot(bot)
 
 	def parse_pairs(self, pairs: List):
@@ -113,66 +114,11 @@ class Universe(Strategy):
 			#
 			# Let's realize the simulation
 			#
-			for step in path_data['simulation']:
-				if step['type'] == 'initial':
-					continue
-
-				# Prepare
-				pair_str = step['pair']
-				pair = pair_str.split('/')
-
-				best_price = step['transactions'][1]['price']
-				worst_price = step['transactions'][-1]['price']
-				self.bot.log(
-					"Price (best / worse): %f / %f" % (best_price, worst_price),
-					priority=1,
-					extra_values=False
+			for i, step in path_data['simulation'].enumerate():
+				self.executor.execute(
+					simulation = path_data['simulation'],
+					index = i
 				)
-
-				# Buy
-				if step['type'] == 'buy':
-					balance = self.bot.get_balance(pair[1])
-					self.bot.log(
-						"%s balance: %f" % (pair[1], balance),
-						priority=1,
-						extra_values=False
-					)
-					quote = self.limit(
-						balance,
-						pair[1]
-					)
-					base = quote / best_price
-
-					self.bot.log(
-						"Buying %s; Base: %f; Quote: %f; Price: %f" % (pair_str, base, quote, worst_price),
-						priority=1,
-						extra_values=False
-					)
-					self.bot.buy(pair_str, base, worst_price)
-
-					self.wait_for_orders(pair_str)
-
-				# Sell
-				if step['type'] == 'sell':
-					balance = self.bot.get_balance(pair[0])
-					self.bot.log(
-						"%s balance: %f" % (pair[0], balance),
-						priority=1,
-						extra_values=False
-					)
-					base = self.limit(
-						balance,
-						pair[0]
-					)
-
-					self.bot.log(
-						"Selling %s; Base: %f; Price: %f" % (pair_str, base, worst_price),
-						priority=1,
-						extra_values=False
-					)
-					self.bot.sell(pair_str, base, worst_price)
-
-					self.wait_for_orders(pair_str)
 
 			#
 			# Log the results
@@ -198,12 +144,6 @@ class Universe(Strategy):
 				})
 			)
 
-	def limit(self, amount, symbol):
-		if (symbol in self.limits) and (amount > self.limits[symbol]):
-			amount = self.limits[self.endpoint]
-
-		return amount
-
 	def wait_for_orders(self, pair: str, since=None, limit=None):
 		for i in range(self.order_timeout):
 			orders = self.bot.get_open_orders(pair, since, limit)
@@ -214,6 +154,165 @@ class Universe(Strategy):
 			time.sleep(1)
 
 		raise TimeoutError("Order %s not closed after %d seconds." % (pair, self.order_timeout))
+
+
+
+
+
+#######
+#       #    # ######  ####  #    # #####  ####  #####   ####
+#        #  #  #      #    # #    #   #   #    # #    # #
+#####     ##   #####  #      #    #   #   #    # #    #  ####
+#         ##   #      #      #    #   #   #    # #####       #
+#        #  #  #      #    # #    #   #   #    # #   #  #    #
+####### #    # ######  ####   ####    #    ####  #    #  ####
+
+class Executor(object):
+	def __init__(self, limits = {}):
+		self.limits = limits
+		self.bot = None
+
+	def set_bot(self, bot):
+		self.bot = bot
+
+	def execute(self, simulation: list, index: int):
+		pass
+
+	def limit(self, amount, symbol):
+		if (symbol in self.limits) and (amount > self.limits[symbol]):
+			amount = self.limits[self.endpoint]
+
+		return amount
+
+
+class MarketExecutor(Executor):
+	def execute(self, simulation: list, index: int):
+		step = simulation[index]
+
+		# Prepare
+		pair_str = step['pair']
+		pair = pair_str.split('/')
+
+		# Buy
+		if step['type'] == 'buy':
+			balance = self.bot.get_balance(pair[1])
+			self.bot.log(
+				"%s balance: %f" % (pair[1], balance),
+				priority=1,
+				extra_values=False
+			)
+			quote = self.limit(
+				balance,
+				pair[1]
+			)
+
+			self.bot.log(
+				"Buying %s; Cost: %f" % (pair_str, quote),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.buy(pair_str, cost=quote)
+
+			self.wait_for_orders(pair_str)
+
+		# Sell
+		if step['type'] == 'sell':
+			balance = self.bot.get_balance(pair[0])
+			self.bot.log(
+				"%s balance: %f" % (pair[0], balance),
+				priority=1,
+				extra_values=False
+			)
+			base = self.limit(
+				balance,
+				pair[0]
+			)
+
+			self.bot.log(
+				"Selling %s; Base: %f" % (pair_str, base),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.sell(pair_str, base)
+
+			self.wait_for_orders(pair_str)
+
+
+class WorsePriceExecutor(Executor):
+	def execute(self, simulation: list, index: int):
+		step = simulation[index]
+
+		# Prepare
+		pair_str = step['pair']
+		pair = pair_str.split('/')
+
+		expected_value = simulation[-1]['result_amount'] / simulation[0]['result_amount']
+		best_price = step['transactions'][1]['price']
+		worst_price = step['transactions'][-1]['price']
+		self.bot.log(
+			"Price (best / worst): %f / %f" % (best_price, worst_price),
+			priority=1,
+			extra_values=False
+		)
+
+		# Buy
+		if step['type'] == 'buy':
+			worst_price = worst_price * expected_value
+			self.bot.log(
+				"Changing worst price to %f" % (worst_price),
+				priority=1,
+				extra_values=False
+			)
+
+			balance = self.bot.get_balance(pair[1])
+			self.bot.log(
+				"%s balance: %f" % (pair[1], balance),
+				priority=1,
+				extra_values=False
+			)
+			quote = self.limit(
+				balance,
+				pair[1]
+			)
+			base = quote / worst_price
+
+			self.bot.log(
+				"Buying %s; Base: %f; Quote: %f; Price: %f" % (pair_str, base, quote, worst_price),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.buy(pair_str, base, worst_price)
+
+			self.wait_for_orders(pair_str)
+
+		# Sell
+		if step['type'] == 'sell':
+			worst_price = worst_price / expected_value
+			self.bot.log(
+				"Changing worst price to %f" % (worst_price),
+				priority=1,
+				extra_values=False
+			)
+
+			balance = self.bot.get_balance(pair[0])
+			self.bot.log(
+				"%s balance: %f" % (pair[0], balance),
+				priority=1,
+				extra_values=False
+			)
+			base = self.limit(
+				balance,
+				pair[0]
+			)
+
+			self.bot.log(
+				"Selling %s; Base: %f; Price: %f" % (pair_str, base, worst_price),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.sell(pair_str, base, worst_price)
+
+			self.wait_for_orders(pair_str)
 
 
 
