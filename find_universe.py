@@ -41,9 +41,9 @@ exchanges = ['stex', 'gopax', 'gemini', 'southxchange', 'timex', 'ice3x', 'gatei
 	'coinex', 'whitebit', 'bitvavo', 'bequant', 'oceanex', 'huobijp', 'hitbtc', 'ftx',
 	'cex', 'bitkk']
 # able to do market orders
-exchanges = ['gopax', 'southxchange', 'timex', 'ice3x', 'lbank', 'bigone', 'aofex',
-	'bittrex', 'binanceus', 'bitfinex', 'coinex', 'bitvavo', 'bequant', 'oceanex',
-	'huobijp', 'hitbtc', 'ftx', 'cex']
+# exchanges = ['gopax', 'southxchange', 'timex', 'ice3x', 'lbank', 'bigone', 'aofex',
+# 	'bittrex', 'binanceus', 'bitfinex', 'coinex', 'bitvavo', 'bequant', 'oceanex',
+# 	'huobijp', 'hitbtc', 'ftx', 'cex']
 
 trade_amounts = {
 	'BTC': 0.001,
@@ -75,8 +75,7 @@ storage.save('all_stats', all_stats)
 # Never-ending work...
 while True:
 	for exchange_name in exchanges:
-		for i in range(5):
-			endpoint = None  ###
+		for i in range(3):
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
 
@@ -87,8 +86,8 @@ while True:
 					'enableRateLimit': False,
 				})
 
-				if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
-					raise Exception("%s doesn't support market orders." % exchange_name)
+				# if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
+				# 	raise Exception("%s doesn't support market orders." % exchange_name)
 
 				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
 				if len(pairs) == 0:
@@ -103,8 +102,9 @@ while True:
 				bot = ttm.bot.Real(
 					exchange,
 					ttm.strategy.Universe(
-						exchange_pairs=pairs,
-						endpoint=endpoint,
+						exchange_pairs = pairs,
+						endpoint = endpoint,
+						executor = ttm.strategy.universe.Executor(),
 					),
 					storage,
 					cache,
@@ -117,11 +117,12 @@ while True:
 				paths = bot.strategy.scanner.full_scan(
 					pairs,
 					endpoint,
-					path_length=4,
-					trade_amount=trade_amount,
-					min_result_after_fees=trade_amount*1.00,
-					min_bids_count=3,
-					min_asks_count=3,
+					path_length = 4,
+					trade_amount = trade_amount,
+					min_result_after_fees = trade_amount * 1.00,
+					min_worse_result = trade_amount * 1.00,
+					min_bids_count = 3,
+					min_asks_count = 3,
 				)
 
 				# Save results into statistics
@@ -133,6 +134,7 @@ while True:
 						'result_coef': 1.0,
 						'result_coef_fee_free': 1.0,
 						'simulation_result_coef': 1.0,
+						'worse_result_coef': 1.0,
 						'pairs_count': len(pairs),
 						'paths_count': 0,
 						'paths': {},
@@ -144,12 +146,14 @@ while True:
 					result_coef = path_data['result_amount'] / trade_amount
 					result_coef_fee_free = path_data['result_amount_fee_free'] / trade_amount
 					simulation_result_coef = path_data['simulation'][-1]['result_amount'] / path_data['simulation'][0]['result_amount']
+					worse_result_coef = path_data['simulation'][-1]['worse_result_amount'] / path_data['simulation'][0]['result_amount']
 
 					print(" • %s: %f" % (path_key, simulation_result_coef))
 
 					all_stats[exchange_name]['result_coef'] *= result_coef
 					all_stats[exchange_name]['result_coef_fee_free'] *= result_coef_fee_free
 					all_stats[exchange_name]['simulation_result_coef'] *= simulation_result_coef
+					all_stats[exchange_name]['worse_result_coef'] *= worse_result_coef
 
 					if path_key not in all_stats[exchange_name]['paths']:
 						all_stats[exchange_name]['paths'][path_key] = {
@@ -157,6 +161,7 @@ while True:
 							'result_coef': 1.0,
 							'result_coef_fee_free': 1.0,
 							'simulation_result_coef': 1.0,
+							'worse_result_coef': 1.0,
 							'trade_amount': trade_amount,
 							'last_result_amount': None,
 							'last_result_amount_fee_free': None,
@@ -164,6 +169,7 @@ while True:
 							'last_result_coef': None,
 							'last_result_coef_fee_free': None,
 							'last_simulation_result_coef': None,
+							'last_worse_result_coef': None,
 							'datetime': [],
 							'steps': [],
 							'simulation': [],
@@ -174,6 +180,7 @@ while True:
 					all_stats[exchange_name]['paths'][path_key]['result_coef'] *= result_coef
 					all_stats[exchange_name]['paths'][path_key]['result_coef_fee_free'] *= result_coef_fee_free
 					all_stats[exchange_name]['paths'][path_key]['simulation_result_coef'] *= simulation_result_coef
+					all_stats[exchange_name]['paths'][path_key]['worse_result_coef'] *= worse_result_coef
 					all_stats[exchange_name]['paths'][path_key]['datetime'].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 					all_stats[exchange_name]['paths'][path_key]['last_result_amount'] = path_data['result_amount']
 					all_stats[exchange_name]['paths'][path_key]['last_result_amount_fee_free'] = path_data['result_amount_fee_free']
@@ -181,6 +188,7 @@ while True:
 					all_stats[exchange_name]['paths'][path_key]['last_result_coef'] = result_coef
 					all_stats[exchange_name]['paths'][path_key]['last_result_coef_fee_free'] = result_coef_fee_free
 					all_stats[exchange_name]['paths'][path_key]['last_simulation_result_coef'] = simulation_result_coef
+					all_stats[exchange_name]['paths'][path_key]['last_worse_result_coef'] = worse_result_coef
 					all_stats[exchange_name]['paths'][path_key]['steps'] = path_data['steps']
 					all_stats[exchange_name]['paths'][path_key]['simulation'] = path_data['simulation']
 					all_stats[exchange_name]['paths'][path_key]['order_books'] = path_data['order_books']

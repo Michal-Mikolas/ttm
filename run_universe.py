@@ -8,7 +8,7 @@ from pprint import pprint
 #
 data_folder = 'output/universe'
 
-exchange = ccxt.bittrex({
+exchange = ttm.exchange.BittrexFix({
     'enableRateLimit': False,
    	'apiKey': keyring.get_password('bittrex', 'apiKey'),
     'secret': keyring.get_password('bittrex', 'secret'),
@@ -17,12 +17,12 @@ pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; pri
 strategy = ttm.strategy.Universe(
 	endpoint='BTC',
 	exchange_pairs=pairs,
-	executor=ttm.strategy.universe.MarketExecutor(
-		limits={'BTC': 0.001},
-	),
+	executor=ttm.strategy.universe.WorsePriceExecutor(),
 	minimal_value=1.00,
+	minimal_worse_value=1.00,
 	path_length=4,
 	tick_period=1,
+	limits={'BTC': 0.00060},
 )
 
 storage = ttm.storage.JSONFile(data_folder + '/storage-universe.json')  # storage for strategy data

@@ -19,6 +19,14 @@ TTM - ToTheMoon crypto trading bot
 """
 class Real(Bot):
 
+	###
+	 #  #    # # #####
+	 #  ##   # #   #
+	 #  # #  # #   #
+	 #  #  # # #   #
+	 #  #   ## #   #
+	### #    # #   #
+
 	def __init__(self, exchange: Exchange, strategy: Strategy, storage: Storage, cache: Storage, logger: Logger):
 		super().__init__(exchange, strategy, storage, cache, logger)
 
@@ -29,12 +37,20 @@ class Real(Bot):
 		self.chatbot = chatbot
 		self.chatbot.set_bot(self)
 
+	#######
+	#     # #####  #####  ###### #####   ####
+	#     # #    # #    # #      #    # #
+	#     # #    # #    # #####  #    #  ####
+	#     # #####  #    # #      #####       #
+	#     # #   #  #    # #      #   #  #    #
+	####### #    # #####  ###### #    #  ####
+
 	def buy(self, pair: str, amount: float = None, price: float = None, cost: float = None):
 		if amount and price:
 			return self.buy_limit(pair, amount, price)
 
 		if cost:
-			return self.buy_market(cost=cost)
+			return self.buy_market(pair, amount=amount, cost=cost)
 
 		raise Exception("Can't place buy order with given parameters.")
 
@@ -47,25 +63,68 @@ class Real(Bot):
 			priority=2
 		)
 
-	def buy_market(self, pair: str, cost: float):
-		self.exchange.options['createMarketBuyOrderRequiresPrice'] = False
+	def buy_market(self, pair: str, amount: float = None, cost: float = None):
+		if amount and not cost:
+			self.exchange.create_market_buy_order(pair, amount=amount)
 
-		self.exchange.create_market_buy_order(pair, cost)
+			symbols = self.split_pair(pair)
+			self.log(
+				'Bought {:f} {:s} for {:s} (market)'.format(cost, symbols[0], symbols[1]),
+				priority=2
+			)
+
+		if cost and not amount:
+			self.exchange.options['createMarketBuyOrderRequiresPrice'] = False
+
+			self.exchange.create_market_buy_order(pair, cost)
+
+			symbols = self.split_pair(pair)
+			self.log(
+				'Bought {:s} for {:f} {:s} (market)'.format(symbols[0], cost, symbols[1]),
+				priority=2
+			)
+
+			return
+
+		raise Exception("Can't place market buy order with given parameters.")
+
+	def sell(self, pair, amount, price: float = None):
+		if amount and price:
+			return self.sell_limit(pair, amount, price)
+
+		if amount and not price:
+			return self.sell_market(pair, amount)
+
+		raise Exception("Can't place sell order with given parameters.")
+
+	def sell_limit(self, pair: str, amount: float, price: float):
+		self.exchange.create_order(pair, 'limit', 'sell', amount, price)
 
 		symbols = self.split_pair(pair)
 		self.log(
-			'Bought {:s} for {:f} {:s} (market)'.format(symbols[0], cost, symbols[1]),
+			'Sold {:f} {:s}'.format(amount, symbols[0]),
 			priority=2
 		)
 
-	def sell(self, pair, amount, price: float):
-		self.exchange.create_order(pair, 'limit', 'sell', amount, price)
+	def sell_market(self, pair: str, amount: float):
+		self.exchange.create_market_sell_order(pair, amount)
 
-		currencies = self.split_pair(pair)
+		symbols = self.split_pair(pair)
 		self.log(
-			'Sold {:f} {:s}'.format(amount, currencies[0]),
+			'Sold {:f} {:s} (market)'.format(amount, symbols[0]),
 			priority=2
 		)
+
+	def get_open_orders(self, symbol: str, since=None, limit=None):
+		return self.exchange.fetchOpenOrders(symbol, since, limit)
+
+	 #####
+	#     # #    # #####  #####  ###### #    #  ####  # ######  ####
+	#       #    # #    # #    # #      ##   # #    # # #      #
+	#       #    # #    # #    # #####  # #  # #      # #####   ####
+	#       #    # #####  #####  #      #  # # #      # #           #
+	#     # #    # #   #  #   #  #      #   ## #    # # #      #    #
+	 #####   ####  #    # #    # ###### #    #  ####  # ######  ####
 
 	def get_balance(self, symbol):
 		# Fetch data from exchange
@@ -76,9 +135,6 @@ class Real(Bot):
 			return balances[symbol]
 		else:
 			return 0.0
-
-	def get_open_orders(self, symbol: str, since=None, limit=None):
-		return self.exchange.fetchOpenOrders(symbol, since, limit)
 
 	def get_tickers(self, pairs):
 		return self.exchange.fetch_tickers(pairs)
@@ -101,6 +157,44 @@ class Real(Bot):
 
 		# Finish
 		return ohlcvs
+
+	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):
+		if from_timestamp or till_timestamp:
+			ohlcvs = super()._download_ohlcvs(pair, timeframe, from_timestamp, till_timestamp)
+		else:
+			ohlcvs = self._download_last_ohlcvs(pair, timeframe)
+
+		return ohlcvs
+
+	def _download_last_ohlcvs(self, pair: str, timeframe: str):
+		ohlcvs = None
+		cache_key = "%s-%s" % (pair, timeframe)
+
+		# Try to load from cache
+		if cache_key in self.temp:
+			# Cache lasts for 30 seconds
+			if (datetime.now() - self.temp[cache_key]['created']).total_seconds() <= 30:
+				ohlcvs = self.temp[cache_key]['ohlcvs']
+
+		# If not in cache, download & cache
+		if not ohlcvs:
+			ohlcvs = super()._download_ohlcvs(pair, timeframe)
+
+			self.temp[cache_key] = {
+				'created': datetime.now(),
+				'ohlcvs': ohlcvs,
+			}
+
+		# Finish
+		return ohlcvs
+
+	######
+	#     # #    # #    #
+	#     # #    # ##   #
+	######  #    # # #  #
+	#   #   #    # #  # #
+	#    #  #    # #   ##
+	#     #  ####  #    #
 
 	def run(self):
 		self.log('Starting bot...', priority=1)
@@ -134,33 +228,3 @@ class Real(Bot):
 	def __del__(self):
 		self.log('Terminating bot...', priority=1)
 		self.strategy.finish()
-
-	def _download_ohlcvs(self, pair: str, timeframe: str, from_timestamp: int = None, till_timestamp: int = None):
-		if from_timestamp or till_timestamp:
-			ohlcvs = super()._download_ohlcvs(pair, timeframe, from_timestamp, till_timestamp)
-		else:
-			ohlcvs = self._download_last_ohlcvs(pair, timeframe)
-
-		return ohlcvs
-
-	def _download_last_ohlcvs(self, pair: str, timeframe: str):
-		ohlcvs = None
-		cache_key = "%s-%s" % (pair, timeframe)
-
-		# Try to load from cache
-		if cache_key in self.temp:
-			# Cache lasts for 30 seconds
-			if (datetime.now() - self.temp[cache_key]['created']).total_seconds() <= 30:
-				ohlcvs = self.temp[cache_key]['ohlcvs']
-
-		# If not in cache, download & cache
-		if not ohlcvs:
-			ohlcvs = super()._download_ohlcvs(pair, timeframe)
-
-			self.temp[cache_key] = {
-				'created': datetime.now(),
-				'ohlcvs': ohlcvs,
-			}
-
-		# Finish
-		return ohlcvs

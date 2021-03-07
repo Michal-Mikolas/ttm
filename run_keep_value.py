@@ -5,17 +5,17 @@ import keyring
 #
 # Init
 #
-data_folder = 'output/real'
+data_folder = 'output/keep_value'
 
 exchange = ccxt.binance({
 	'enableRateLimit': True,
 	'apiKey': keyring.get_password('binance', 'apiKey'),
     'secret': keyring.get_password('binance', 'secret'),
 })
-strategy = ttm.strategy.DCA(
+strategy = ttm.strategy.KeepValue(
 	pair='BTC/EUR',
-	initial_target_value=100,  # EUR
-	minimal_move=5.0,          # percent
+	initial_target_value=151.0,  # EUR
+	minimal_move=5.0,            # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.97,

@@ -11,7 +11,7 @@ TTM - ToTheMoon crypto trading bot
 
 @author  Michal Mikolas (nanuqcz@gmail.com)
 """
-class DCA(Strategy):
+class KeepValue(Strategy):
 
 	def __init__(self, pair: str, initial_target_value: float, minimal_move=5.0, tick_period=60, timeframe='1m', sell_modifier=1.00, buy_modifier=1.00):
 		super().__init__()
@@ -54,7 +54,7 @@ class DCA(Strategy):
 				pprint(ohlcv)
 				self.bot.log(
 					"Selling done. Setting target_value = %f" % ((balance - sell_amount) * ohlcv[4]),
-					priority=0,
+					priority=1,
 					extra_values=False
 				)
 				self.save_target_value((balance - sell_amount) * ohlcv[4])
@@ -65,7 +65,7 @@ class DCA(Strategy):
 				"Buying {:f}. Reason: balance={:f}, target_balance={:f}, move={:f}, self.minimal_move={:f}".format(
 					buy_amount, balance, target_balance, move, self.minimal_move
 				),
-				priority=0,
+				priority=1,
 				extra_values=False
 			)
 
@@ -75,7 +75,7 @@ class DCA(Strategy):
 				pprint(ohlcv)
 				self.bot.log(
 					"Buying done. Setting target_value = %f" % ((balance + buy_amount) * ohlcv[4]),
-					priority=0,
+					priority=1,
 					extra_values=False
 				)
 				self.save_target_value((balance + buy_amount) * ohlcv[4])
@@ -110,21 +110,21 @@ class DCA(Strategy):
 	def buy(self, pair, amount, price):
 		try:
 			self.bot.log(
-				"/dca/buy: Buying %f of %s for price %f" % (amount, pair, price),
-				priority=0,
+				"/keep_value/buy: Buying %f of %s for price %f" % (amount, pair, price),
+				priority=1,
 				extra_values=False
 			)
 			self.bot.buy(pair, amount, price)
 			self.bot.log(
-				"/dca/buy: Buy order sent.",
-				priority=0,
+				"/keep_value/buy: Buy order sent.",
+				priority=1,
 				extra_values=False
 			)
 
 			self.error_sent = False
 			self.bot.log(
-				"/dca/buy: returning True.",
-				priority=0,
+				"/keep_value/buy: returning True.",
+				priority=1,
 				extra_values=False
 			)
 			return True
@@ -132,11 +132,11 @@ class DCA(Strategy):
 		except ccxt.InvalidOrder as e:
 			self.bot.log(
 				'Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1),
-				priority=(0 if self.error_sent else 2)
+				priority=(1 if self.error_sent else 2)
 			)
 			self.bot.log(
 				e,
-				priority=(0 if self.error_sent else 2),
+				priority=(1 if self.error_sent else 2),
 				extra_values=False
 			)
 			self.error_sent = True
@@ -144,21 +144,21 @@ class DCA(Strategy):
 	def sell(self, pair, amount, price):
 		try:
 			self.bot.log(
-				"/dca/sell: Selling %f of %s for price %f" % (amount, pair, price),
-				priority=0,
+				"/keep_value/sell: Selling %f of %s for price %f" % (amount, pair, price),
+				priority=1,
 				extra_values=False
 			)
 			self.bot.sell(pair, amount, price)
 			self.bot.log(
-				"/dca/sell: Sell order sent.",
-				priority=0,
+				"/keep_value/sell: Sell order sent.",
+				priority=1,
 				extra_values=False
 			)
 
 			self.error_sent = False
 			self.bot.log(
-				"/dca/sell: returning True.",
-				priority=0,
+				"/keep_value/sell: returning True.",
+				priority=1,
 				extra_values=False
 			)
 			return True
@@ -166,11 +166,11 @@ class DCA(Strategy):
 		except ccxt.InvalidOrder as e:
 			self.bot.log(
 				'Sell of {:5.5f} {:s} failed...'.format(amount, self.currency1),
-				priority=(0 if self.error_sent else 2)
+				priority=(1 if self.error_sent else 2)
 			)
 			self.bot.log(
 				e,
-				priority=(0 if self.error_sent else 2),
+				priority=(1 if self.error_sent else 2),
 				extra_values=False
 			)
 			self.error_sent = True

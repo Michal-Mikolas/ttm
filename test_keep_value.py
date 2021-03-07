@@ -2,7 +2,7 @@ import os
 import ccxt
 import ttm
 
-data_folder = 'output/7.5k-7.5k_1.00-1.00'
+data_folder = 'output/test_keep_value'
 
 #
 # Clean from last run
@@ -17,12 +17,12 @@ except:
 # Init
 #
 exchange = ccxt.binance({'enableRateLimit': True})
-strategy = ttm.strategy.DCA(
+strategy = ttm.strategy.KeepValue(
 	pair='BTC/USDT',
 	initial_target_value=100,  # USD
-	minimal_move=2.5,          # percent
-	tick_period=5*60,
-	timeframe='5m',
+	minimal_move=5.0,          # percent
+	tick_period=60*60,
+	timeframe='1h',
 	sell_modifier=1.00,  #0.9778421,
 	buy_modifier=1.00,  #1.0221579,
 )
@@ -34,7 +34,7 @@ logger = ttm.logger.Multi(
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 	ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 		'file': 'output/results.csv',
-		'note': 'minimal_move=2.5, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=100, pair=BTC/USDT, tick_period=5*60, timeframe=5m',
+		'note': 'minimal_move=5.0, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=100, pair=BTC/USDT, tick_period=60*60, timeframe=1h',
 	}),
 	# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 )
@@ -45,7 +45,7 @@ logger.set_pair('BTC/USDT')
 # 7.5k-24.5k: '2020-04-24', '2020-12-26'
 bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-06-01', '2020-04-24', {
 	'BTC': 0.0,
-	'USD': 0.0,
+	'USDT': 0.0,
 })
 
 #
