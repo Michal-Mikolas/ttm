@@ -44,7 +44,7 @@ class KeepValue(Strategy):
 				"Selling {:f}. Reason: balance={:f}, target_balance={:f}, move={:f}, self.minimal_move={:f}".format(
 					sell_amount, balance, target_balance, move, self.minimal_move
 				),
-				priority=0,
+				priority=1,
 				extra_values=False
 			)
 

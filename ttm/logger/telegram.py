@@ -50,6 +50,7 @@ class Telegram(Logger):
 		args = self.fetch_args(msg['text'])
 
 		content_type, chat_type, self.chat_id = telepot.glance(msg)
+		self.chat_id = str(self.chat_id)
 
 		# Security
 		if args[0] not in ['start', 'login', 'hello', 'hi']:
@@ -108,13 +109,21 @@ class Telegram(Logger):
 		return is_logged_in
 
 	def prepare_session(self):
+		self.sessions = self.bot.storage.get('telegram_sessions') or {}
+
 		if self.chat_id not in self.sessions:
 			self.sessions[self.chat_id] = {
 				'password': None,
 				'msg_history': []
 			}
 
+			self.save_sessions()
+
 		return self.sessions[self.chat_id]
+
+	def save_sessions(self):
+		if self.bot:
+			self.bot.storage.save('telegram_sessions', self.sessions)
 
 	#     #
 	##    #  ####  ##### # ###### #  ####    ##   ##### #  ####  #    #  ####
@@ -128,6 +137,8 @@ class Telegram(Logger):
 		# Prepare
 		if not self.bot:
 			self.bot = bot
+
+		self.prepare_session()
 
 		if priority < self.min_priority:
 			return
@@ -156,19 +167,36 @@ class Telegram(Logger):
 			# append it to the end
 			session['msg_history'].append(msg)
 			# keep only last 4 msgs
-			session['msg_history'] = session['msg_history'][-4:]
+			session['msg_history'] = session['msg_history'][-8:]
+
+		self.save_sessions()
 
 		# Return history
 		return session['msg_history']
 
 	def get_history_keyboard(self):
 		rows = []
-		for msg in reversed(self.history()):
-			rows.append([KeyboardButton(text=msg)])
+		i = 0
+		history = list(reversed(self.history()))
+		while i < len(history):
+			row = [KeyboardButton(text=history[i])]
 
-		return ReplyKeyboardMarkup(
-			keyboard=rows
-		)
+			i += 1
+			if i < len(history):
+				row.append(KeyboardButton(text=history[i]))
+
+			rows.append(row)
+			i += 1
+
+		return ReplyKeyboardMarkup(keyboard=rows)
+
+		# rows = []
+		# for msg in reversed(self.history()):
+		# 	rows.append([KeyboardButton(text=msg)])
+
+		# return ReplyKeyboardMarkup(
+		# 	keyboard=rows
+		# )
 
 	 #####
 	#     #  ####  #    # #    #   ##   #    # #####   ####
@@ -190,13 +218,17 @@ class Telegram(Logger):
 		if args[0] == self.password:
 			self.sessions[self.chat_id]['password'] = args[0]
 			self.send_message('*Yes sir!*')
+			self.save_sessions()
 
 		else:
 			self.send_message('ERROR: Password is not correct.')
 
 	def command_logout(self, args):
+		self.prepare_session()
+
 		if self.chat_id in self.sessions:
 			self.sessions[self.chat_id]['password'] = None
+			self.save_sessions()
 
 		self.send_message('You have been sucessfully logged out.')
 		self.send_message('*Bye sir.*')
