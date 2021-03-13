@@ -19,7 +19,7 @@ class Tools(object):
 					pairs[pair] = {'ticker': None, 'market': None, 'orderBook': None}
 
 				pairs[pair]['ticker'] = ticker
-		except ccxt.NotSupported:
+		except ccxt.NotSupported as e:
 			pass
 
 		# From markets info
@@ -30,7 +30,7 @@ class Tools(object):
 					pairs[pair] = {'ticker': None, 'market': None, 'orderBook': None}
 
 				pairs[pair]['market'] = market
-		except ccxt.NotSupported:
+		except ccxt.NotSupported as e:
 			pass
 
 		#
@@ -63,6 +63,11 @@ class Tools(object):
 
 			# Filter: Bittrex tokenized stocks are banned from normal trading
 			if info['market'] and ('tags' in info['market']['info']) and ('TOKENIZED_SECURITY' in info['market']['info']['tags']):
+				pairs.pop(pair)
+				continue
+
+			# Filter: Stex price multiplier is not implemented in TTM
+			if info['market'] and ('amount_multiplier' in info['market']['info']) and (info['market']['info']['amount_multiplier'] != 1):
 				pairs.pop(pair)
 				continue
 
@@ -99,7 +104,7 @@ class Tools(object):
 
 		counter = {k:counter[k] for k in sorted(counter, key=counter.get, reverse=True)}
 
-		if len(counter):
+		if len(counter) > index:
 			return list(counter.keys())[index]
 
 		else:

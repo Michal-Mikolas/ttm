@@ -208,10 +208,11 @@ class Real(Bot):
 
 			except (ccxt.RequestTimeout, ccxt.NetworkError, ProtocolError) as e:
 				try:
+					self.log_exception(e)
 					exception_message = "network error... %s: %s" % (type(e).__name__, str(e)[0:255])
 					self.log(exception_message, priority=0, extra_values=False)
-				except:
-					pass
+				except Exception as e:
+					self.log_exception(e)
 
 			finally:
 				try:
@@ -220,8 +221,8 @@ class Real(Bot):
 						priority=0,
 						extra_values=False
 					)
-				except:
-					pass
+				except Exception as e:
+					self.log_exception(e)
 
 				time.sleep(self.strategy.tick_period)
 

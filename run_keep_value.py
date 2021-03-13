@@ -18,8 +18,8 @@ strategy = ttm.strategy.KeepValue(
 	minimal_move=5.0,            # percent
 	tick_period=60,
 	timeframe='5m',
-	sell_modifier=0.97,
-	buy_modifier=1.03,
+	sell_modifier=0.9778421,
+	buy_modifier=1.0221579,
 )
 storage = ttm.storage.JSONFile(data_folder + '/storage.json')  # storage for strategy data
 cache = ttm.storage.JSONFile('cache.json')                     # storage for performance optimalisation
@@ -38,6 +38,7 @@ logger = ttm.logger.Multi(
 logger.set_pair('BTC/EUR')
 
 bot = ttm.bot.Real(exchange, strategy, storage, cache, logger)
+# bot.set_exceptions_file(data_folder + '/exceptions.log')
 
 #
 # Run

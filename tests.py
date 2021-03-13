@@ -5,7 +5,7 @@ import ttm
 from pprint import pprint
 
 exchange = ccxt.binance({'enableRateLimit': True})
-strategy = ttm.strategy.DCA('BTC/USD', 100)
+strategy = ttm.strategy.KeepValue('BTC/USD', 100)
 storage = ttm.storage.JSONFile('test-storage.json')
 cache = ttm.storage.JSONFile('cache.json')
 logger = ttm.logger.Console()
@@ -17,6 +17,7 @@ bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-01-01',
 #
 pairs = ttm.Tools.get_pairs(exchange)
 assert 'ETH/BTC' in pairs, "Tools.get_pairs test failed"
+ttm.Tools.find_popular_quote(pairs)
 
 #
 # CCXT

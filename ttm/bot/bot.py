@@ -3,6 +3,8 @@ from ttm.strategy import Strategy
 from ttm.storage import Storage
 from ttm.logger import Logger
 from datetime import datetime
+import logging
+import traceback
 
 """
 (This file is part of TTM package)
@@ -51,6 +53,17 @@ class Bot():
 
 	def log(self, message: str, priority = 2, extra_values = {}):
 		return self.logger.log(message, self, priority, extra_values)
+
+	def set_exceptions_file(self, filename):
+		logging.basicConfig(filename=filename, level=logging.ERROR)
+
+	def log_exception(self, e):
+		logging.critical('')
+		logging.critical(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+		tb = '\n'.join(traceback.format_tb(e.__traceback__))
+		desc = '{:s}: {:s}'.format(type(e).__name__, str(e)[0:255])
+		logging.critical(desc + '\n' + tb)
 
 	def split_pair(self, pair: str):
 		return pair.split('/')

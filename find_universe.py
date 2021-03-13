@@ -20,36 +20,41 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'bi
 	'deribit', 'digifinex', 'dsx', 'eterbase', 'exmo', 'exx', 'fcoin', 'fcoinjp',
 	'flowbtc', 'foxbit', 'ftx', 'gateio', 'gemini', 'gopax', 'hbtc', 'hitbtc', 'hollaex',
 	'huobijp', 'huobipro', 'ice3x', 'idex', 'independentreserve', 'indodax', 'itbit',
-	'kraken', 'kucoin', 'kuna', 'lakebtc', 'latoken', 'lbank', 'liquid', 'luno', 'lykke',
-	'mercado', 'mixcoins', 'novadax', 'oceanex', 'okcoin', 'okex', 'paymium', 'phemex',
+	'kraken', 'kucoin', 'kuna', 'lakebtc', 'lbank', 'liquid', 'luno', 'lykke',
+	'mercado', 'mixcoins', 'novadax', 'oceanex', 'okcoin', 'paymium', 'phemex',
 	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
 	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
 	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
-# able to fetch all tickers
+# supported by PathTraveler strategy (has required features: fetch_tickers, fetch_markets, ...)
 exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'bitcoincom', 'bitfinex', 'bitfinex2', 'bitget', 'bithumb', 'bitkk', 'bitmart',
 	'bitmex', 'bitpanda', 'bittrex', 'bitvavo', 'bitz', 'bleutrade', 'braziliex', 'bw',
 	'bybit', 'bytetrade', 'cdax', 'cex', 'coinex', 'coinfalcon', 'coinone', 'currencycom',
 	'delta', 'deribit', 'eterbase', 'exmo', 'exx', 'ftx', 'gateio', 'gemini', 'gopax',
 	'hbtc', 'hitbtc', 'hollaex', 'huobijp', 'huobipro', 'ice3x', 'kucoin', 'kuna',
-	'lakebtc', 'latoken', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex',
-	'poloniex', 'qtrade', 'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit',
-	'timex', 'vcc', 'whitebit', 'xena', 'zb']
-# with possible opportunities
-exchanges = ['stex', 'gopax', 'gemini', 'southxchange', 'timex', 'ice3x', 'gateio',
-	'lbank', 'latoken', 'bw', 'bigone', 'aofex', 'bittrex', 'binanceus', 'bitfinex',
-	'coinex', 'whitebit', 'bitvavo', 'bequant', 'oceanex', 'huobijp', 'hitbtc', 'ftx',
-	'cex', 'bitkk']
-# able to do market orders
+	'lakebtc', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'poloniex', 'qtrade',
+	'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit', 'timex', 'upbit', 'vcc',
+	'whitebit', 'xena', 'zb']
+# favorites (with historically found opportunities)
+exchanges = ['huobipro', 'upbit', 'southxchange', 'bw', 'aofex', 'hbtc',
+    'bitvavo', 'whitebit', 'oceanex', 'bittrex']
+# # able to do market orders
 # exchanges = ['gopax', 'southxchange', 'timex', 'ice3x', 'lbank', 'bigone', 'aofex',
 # 	'bittrex', 'binanceus', 'bitfinex', 'coinex', 'bitvavo', 'bequant', 'oceanex',
 # 	'huobijp', 'hitbtc', 'ftx', 'cex']
+# # testing only one
+# exchanges = ['stex']
+''' BLACKLIST
+OKEX - no API for new accounts
+LATOKEN - precision max 10 satoshi (X.XXXX BTC)
+'''
 
-trade_amounts = {
+simulation_trade_amounts = {
 	'BTC': 0.001,
 	'EUR': 42.0,
 	'USD': 50.0,
 	'USDT': 50.0,
+	'USxD': 50.0,
 	'AUD': 65.0,
 	'AQ': 331.0,
 	'QC': 333.0,
@@ -75,7 +80,7 @@ storage.save('all_stats', all_stats)
 # Never-ending work...
 while True:
 	for exchange_name in exchanges:
-		for i in range(3):
+		for i in range(1):
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)
 
@@ -95,9 +100,9 @@ while True:
 
 				endpoint = ttm.Tools.find_popular_quote(pairs)
 
-				if endpoint not in trade_amounts:
-					raise Exception("No trade amount for '%s' was specified." % endpoint)
-				trade_amount = trade_amounts[endpoint]
+				if endpoint not in simulation_trade_amounts:
+					raise Exception("No simulation trade amount for '%s' was specified." % endpoint)
+				trade_amount = simulation_trade_amounts[endpoint]
 
 				bot = ttm.bot.Real(
 					exchange,

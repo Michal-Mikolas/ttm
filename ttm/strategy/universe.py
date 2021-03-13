@@ -274,7 +274,7 @@ class WorsePriceExecutor(Executor):
 
 		# Buy
 		if step['type'] == 'buy':
-			worst_price = worst_price * expected_value
+			# worst_price = worst_price * expected_value
 			self.bot.log(
 				"Changing worst price to %f" % (worst_price),
 				priority=1,
@@ -304,7 +304,7 @@ class WorsePriceExecutor(Executor):
 
 		# Sell
 		if step['type'] == 'sell':
-			worst_price = worst_price / expected_value
+			# worst_price = worst_price / expected_value
 			self.bot.log(
 				"Changing worst price to %f" % (worst_price),
 				priority=1,
@@ -416,7 +416,7 @@ class UniverseScanner(object):
 					continue
 
 		# 6. Finish
-		paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['result_amount'], reverse=True)}
+		paths = {k:paths[k] for k in sorted(paths, key=lambda k: paths[k]['simulation'][-1]['worse_result_amount'], reverse=True)}
 
 		return paths
 
@@ -698,34 +698,34 @@ class UniverseScanner(object):
 		# Ideal buy
 		# (use all cheap offers)
 		#
-		for offer_price, offer_amount in offers:
+		for offer_price, offer_base in offers:
 			claimed_base = quote / offer_price
 
 			# not enough base available, buy what you can
-			if claimed_base > offer_amount:
-				base += offer_amount
-				quote -= offer_amount * offer_price
+			if claimed_base > offer_base:
+				base += offer_base
+				quote -= offer_base * offer_price
 
 				transactions.append({
 					'type': 'buy',
 					'price': offer_price,
-					'available_amount': offer_amount,
-					'change_base': offer_amount,
-					'change_quote': -1 * offer_amount * offer_price,
+					'available_amount': offer_base,
+					'change_base': offer_base,
+					'change_quote': -1 * offer_base * offer_price,
 					'result_base': base,
 					'result_quote': quote,
 					'worse_result_base': 0.0,
 				})
 
 			# all wanted base can be bought
-			if claimed_base <= offer_amount:
+			if claimed_base <= offer_base:
 				base += claimed_base
 				quote = 0.0
 
 				transactions.append({
 					'type': 'buy',
 					'price': offer_price,
-					'available_amount': offer_amount,
+					'available_amount': offer_base,
 					'change_base': claimed_base,
 					'change_quote': -1 * claimed_base * offer_price,
 					'result_base': base,
@@ -741,15 +741,15 @@ class UniverseScanner(object):
 		# Worse buy
 		# (if small-amount offers are gone)
 		#
-		for offer_price, offer_amount in offers:
+		for offer_price, offer_base in offers:
 			claimed_base = worse_quote / offer_price
 
 			# not enough base available, skip
-			if claimed_base > offer_amount:
+			if claimed_base > offer_base:
 				continue
 
 			# all wanted base can be bought
-			if claimed_base <= offer_amount:
+			if claimed_base <= offer_base:
 				transactions[-1]['worse_result_base'] = claimed_base
 				break
 
@@ -775,36 +775,36 @@ class UniverseScanner(object):
 		# Ideal sell
 		# (use all expensive offers)
 		#
-		for offer_price, offer_amount in offers:
-			claimed_quote = base * offer_price
+		for offer_price, offer_base in offers:
 
 			# not enough base available, buy what you can
-			if claimed_quote > offer_amount:
-				base -= offer_amount
-				quote += offer_amount * offer_price
+			if base > offer_base:
+				base -= offer_base
+				quote += offer_base * offer_price
 
 				transactions.append({
 					'type': 'sell',
 					'price': offer_price,
-					'available_amount': offer_amount,
-					'change_base': -1 * offer_amount,
-					'change_quote': offer_amount * offer_price,
+					'available_amount': offer_base,
+					'change_base': -1 * offer_base,
+					'change_quote': offer_base * offer_price,
 					'result_base': base,
 					'result_quote': quote,
 					'worse_result_quote': 0.0,
 				})
 
 			# all wanted base can be bought
-			if claimed_quote <= offer_amount:
+			if base <= offer_base:
+				change_quote = base * offer_price
+				quote += change_quote
 				base = 0.0
-				quote += claimed_quote
 
 				transactions.append({
 					'type': 'sell',
 					'price': offer_price,
-					'available_amount': offer_amount,
-					'change_base': -1 * claimed_quote / offer_price,
-					'change_quote': claimed_quote,
+					'available_amount': offer_base,
+					'change_base': -1 * base,
+					'change_quote': change_quote,
 					'result_base': base,
 					'result_quote': quote,
 					'worse_result_quote': 0.0,
@@ -818,16 +818,15 @@ class UniverseScanner(object):
 		# Worse sell
 		# (if small-amount offers are gone)
 		#
-		for offer_price, offer_amount in offers:
-			claimed_quote = worse_base * offer_price
+		for offer_price, offer_base in offers:
 
 			# not enough base available, skip
-			if claimed_quote > offer_amount:
+			if worse_base > offer_base:
 				continue
 
 			# all wanted base can be bought
-			if claimed_quote <= offer_amount:
-				transactions[-1]['worse_result_quote'] = claimed_quote
+			if worse_base <= offer_base:
+				transactions[-1]['worse_result_quote'] = worse_base * offer_price
 				break
 
 		return transactions
