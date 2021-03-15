@@ -92,6 +92,14 @@ class Tools(object):
 
 		return pairs
 
+	def get_market(exchange, symbol):
+		markets = exchange.fetch_markets()
+		for market in markets:
+			if market['symbol'] == symbol:
+				return market
+
+		return None
+
 	def find_popular_quote(pairs, index=0):
 		counter = {}
 		for pair in pairs:

@@ -36,12 +36,11 @@ exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
 	'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit', 'timex', 'upbit', 'vcc',
 	'whitebit', 'xena', 'zb']
 # favorites (with historically found opportunities)
-exchanges = ['huobipro', 'upbit', 'southxchange', 'bw', 'aofex', 'hbtc',
-    'bitvavo', 'whitebit', 'oceanex', 'bittrex']
-# # able to do market orders
-# exchanges = ['gopax', 'southxchange', 'timex', 'ice3x', 'lbank', 'bigone', 'aofex',
-# 	'bittrex', 'binanceus', 'bitfinex', 'coinex', 'bitvavo', 'bequant', 'oceanex',
-# 	'huobijp', 'hitbtc', 'ftx', 'cex']
+exchanges = ['huobipro', 'upbit', 'southxchange', 'bw', 'aofex', 'hbtc', 'bitvavo',
+	'whitebit', 'oceanex', 'bittrex']
+# able to do market orders
+exchanges = ['huobipro', 'upbit', 'southxchange', 'aofex', 'hbtc', 'bitvavo', 'oceanex',
+	'bittrex']
 # # testing only one
 # exchanges = ['stex']
 ''' BLACKLIST
@@ -91,8 +90,8 @@ while True:
 					'enableRateLimit': False,
 				})
 
-				# if not exchange.has['createMarketOrder'] or not exchange.has['createMarketOrder']:
-				# 	raise Exception("%s doesn't support market orders." % exchange_name)
+				if not exchange.has['createMarketOrder']:
+					raise Exception("%s doesn't support market orders." % exchange_name)
 
 				pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; print(len(pairs))
 				if len(pairs) == 0:

@@ -332,6 +332,76 @@ class WorsePriceExecutor(Executor):
 			self.wait_for_orders(pair_str)
 
 
+class HybridExecutor(Executor):
+	def execute(self, simulation: list, index: int):
+		step = simulation[index]
+
+		# Prepare
+		pair_str = step['pair']
+		pair = pair_str.split('/')
+
+		expected_value = simulation[-1]['result_amount'] / simulation[0]['result_amount']
+		best_price = step['transactions'][1]['price']
+		worst_price = step['transactions'][-1]['price']
+		self.bot.log(
+			"Price (best / worst): %f / %f" % (best_price, worst_price),
+			priority=1,
+			extra_values=False
+		)
+
+		# Buy (worst_price type)
+		if step['type'] == 'buy':
+			# worst_price = worst_price * expected_value
+			self.bot.log(
+				"Changing worst price to %f" % (worst_price),
+				priority=1,
+				extra_values=False
+			)
+
+			balance = self.bot.get_balance(pair[1])
+			self.bot.log(
+				"%s balance: %f" % (pair[1], balance),
+				priority=1,
+				extra_values=False
+			)
+			quote = self.strategy.limit(
+				balance,
+				pair[1]
+			)
+			base = quote / worst_price
+
+			self.bot.log(
+				"Buying %s; Base: %f; Quote: %f; Price: %f" % (pair_str, base, quote, worst_price),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.buy(pair_str, base, worst_price)
+
+			self.wait_for_orders(pair_str)
+
+		# Sell (market type)
+		if step['type'] == 'sell':
+			balance = self.bot.get_balance(pair[0])
+			self.bot.log(
+				"%s balance: %f" % (pair[0], balance),
+				priority=1,
+				extra_values=False
+			)
+			base = self.strategy.limit(
+				balance,
+				pair[0]
+			)
+
+			self.bot.log(
+				"Selling %s; Base: %f" % (pair_str, base),
+				priority=1,
+				extra_values=False
+			)
+			self.bot.sell(pair_str, base)
+
+			self.wait_for_orders(pair_str)
+
+
 
 
 
