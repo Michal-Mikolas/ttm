@@ -1,7 +1,8 @@
 import ccxt
-from datetime import datetime
+from datetime import datetime, timedelta
 from ttm.strategy import Strategy
 import re
+import time
 from pprint import pprint
 
 """
@@ -13,7 +14,7 @@ TTM - ToTheMoon crypto trading bot
 """
 class KeepValue(Strategy):
 
-	def __init__(self, pair: str, initial_target_value: float, minimal_move=5.0, tick_period=60, timeframe='1m', sell_modifier=1.00, buy_modifier=1.00):
+	def __init__(self, pair: str, initial_target_value: float, minimal_move=5.0, tick_period=60, timeframe='1m', sell_modifier=1.00, buy_modifier=1.00, order_timeout=10):
 		super().__init__()
 
 		# Config
@@ -24,6 +25,7 @@ class KeepValue(Strategy):
 		self.timeframe = timeframe
 		self.sell_modifier = sell_modifier  # percent
 		self.buy_modifier = buy_modifier    # percent
+		self.order_timeout = order_timeout
 
 		# Internal
 		self.error_sent = False
@@ -44,18 +46,13 @@ class KeepValue(Strategy):
 				"Selling {:f}. Reason: balance={:f}, target_balance={:f}, move={:f}, self.minimal_move={:f}".format(
 					sell_amount, balance, target_balance, move, self.minimal_move
 				),
-				priority=1,
-				extra_values=False
+				priority=1, extra_values=False
 			)
 
 			if self.sell(self.pair, sell_amount, ohlcv[4]):
-				pprint(balance)
-				pprint(sell_amount)
-				pprint(ohlcv)
 				self.bot.log(
 					"Selling done. Setting target_value = %f" % ((balance - sell_amount) * ohlcv[4]),
-					priority=1,
-					extra_values=False
+					priority=1, extra_values=False
 				)
 				self.save_target_value((balance - sell_amount) * ohlcv[4])
 
@@ -65,14 +62,10 @@ class KeepValue(Strategy):
 				"Buying {:f}. Reason: balance={:f}, target_balance={:f}, move={:f}, self.minimal_move={:f}".format(
 					buy_amount, balance, target_balance, move, self.minimal_move
 				),
-				priority=1,
-				extra_values=False
+				priority=1, extra_values=False
 			)
 
 			if self.buy(self.pair, buy_amount, ohlcv[4]):
-				pprint(balance)
-				pprint(buy_amount)
-				pprint(ohlcv)
 				self.bot.log(
 					"Buying done. Setting target_value = %f" % ((balance + buy_amount) * ohlcv[4]),
 					priority=1,
@@ -121,6 +114,8 @@ class KeepValue(Strategy):
 				extra_values=False
 			)
 
+			self.wait_for_orders(self.pair)
+
 			self.error_sent = False
 			self.bot.log(
 				"/keep_value/buy: returning True.",
@@ -129,7 +124,7 @@ class KeepValue(Strategy):
 			)
 			return True
 
-		except ccxt.InvalidOrder as e:
+		except (ccxt.InvalidOrder, TimeoutError) as e:
 			self.bot.log(
 				'Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1),
 				priority=(1 if self.error_sent else 2)
@@ -155,6 +150,8 @@ class KeepValue(Strategy):
 				extra_values=False
 			)
 
+			self.wait_for_orders(self.pair)
+
 			self.error_sent = False
 			self.bot.log(
 				"/keep_value/sell: returning True.",
@@ -163,7 +160,7 @@ class KeepValue(Strategy):
 			)
 			return True
 
-		except ccxt.InvalidOrder as e:
+		except (ccxt.InvalidOrder, TimeoutError) as e:
 			self.bot.log(
 				'Sell of {:5.5f} {:s} failed...'.format(amount, self.currency1),
 				priority=(1 if self.error_sent else 2)
@@ -186,3 +183,22 @@ class KeepValue(Strategy):
 
 	def save_target_value(self, target_value):
 		self.bot.storage.save('target_value', float(target_value))
+
+	def wait_for_orders(self, pair: str, since=None, limit=None, cancel_on_fail=True):
+		# Wait
+		for i in range(self.order_timeout):
+			orders = self.bot.get_open_orders(pair, since, limit)
+			if len(orders) == 0:
+				time.sleep(1)
+				return True
+
+			time.sleep(1)
+
+		# Cancel orders?
+		if cancel_on_fail:
+			for order in orders:
+				self.bot.log('Canceling order #{:s} ...'.format(order['id']), priority=1)
+				self.bot.cancel_order(order)
+
+		# Exception if orders not filled
+		raise TimeoutError("Order %s not closed after %d seconds." % (pair, self.order_timeout))

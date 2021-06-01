@@ -23,7 +23,7 @@ class Telegram(Logger):
 		self.min_priority = min_priority
 
 		self.bot = None
-		self.chat_id = None
+		self.chat_id = ''
 		self.sessions = {}
 
 		MessageLoop(self.telegram, self.on_message).run_as_thread()
@@ -98,7 +98,7 @@ class Telegram(Logger):
 
 		# Check
 		is_logged_in = False
-		if self.sessions[self.chat_id]['password'] == self.password:
+		if self.chat_id and (self.sessions[self.chat_id]['password'] == self.password):
 			is_logged_in = True
 
 		# Alert
@@ -111,7 +111,7 @@ class Telegram(Logger):
 	def prepare_session(self):
 		self.sessions = self.bot.storage.get('telegram_sessions') or {}
 
-		if self.chat_id not in self.sessions:
+		if self.chat_id and (self.chat_id not in self.sessions):
 			self.sessions[self.chat_id] = {
 				'password': None,
 				'msg_history': []
@@ -119,7 +119,7 @@ class Telegram(Logger):
 
 			self.save_sessions()
 
-		return self.sessions[self.chat_id]
+		return self.sessions[self.chat_id] if (self.chat_id in self.sessions) else None
 
 	def save_sessions(self):
 		if self.bot:
@@ -145,7 +145,7 @@ class Telegram(Logger):
 
 		for chat_id in self.sessions:
 			# Send logs to logged in people only
-			if self.sessions[chat_id]['password'] == self.password:
+			if chat_id and (self.sessions[chat_id]['password'] == self.password):
 				self.send_status(message)
 
 	#     #
@@ -159,6 +159,9 @@ class Telegram(Logger):
 	def history(self, msg:str = None):
 		# Prepare
 		session = self.prepare_session()
+
+		if not session:
+			return []
 
 		# Save last msg
 		if msg and not re.match(r'/?log((in)|(out))', msg.lower()):

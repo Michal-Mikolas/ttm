@@ -59,7 +59,7 @@ class Real(Bot):
 
 		symbols = self.split_pair(pair)
 		self.log(
-			'Bought {:f} {:s} (limit)'.format(amount, symbols[0]),
+			'Buy order of {:f} {:s} created (limit)'.format(amount, symbols[0]),
 			priority=2
 		)
 
@@ -69,7 +69,7 @@ class Real(Bot):
 
 			symbols = self.split_pair(pair)
 			self.log(
-				'Bought {:f} {:s} for {:s} (market)'.format(cost, symbols[0], symbols[1]),
+				'Buy order of {:f} {:s} for {:s} created (market)'.format(cost, symbols[0], symbols[1]),
 				priority=2
 			)
 
@@ -80,7 +80,7 @@ class Real(Bot):
 
 			symbols = self.split_pair(pair)
 			self.log(
-				'Bought {:s} for {:f} {:s} (market)'.format(symbols[0], cost, symbols[1]),
+				'Buy order of {:s} for {:f} {:s} created (market)'.format(symbols[0], cost, symbols[1]),
 				priority=2
 			)
 
@@ -102,7 +102,7 @@ class Real(Bot):
 
 		symbols = self.split_pair(pair)
 		self.log(
-			'Sold {:f} {:s}'.format(amount, symbols[0]),
+			'Sell order of {:f} {:s} created'.format(amount, symbols[0]),
 			priority=2
 		)
 
@@ -111,12 +111,17 @@ class Real(Bot):
 
 		symbols = self.split_pair(pair)
 		self.log(
-			'Sold {:f} {:s} (market)'.format(amount, symbols[0]),
+			'Sell order of {:f} {:s} created (market)'.format(amount, symbols[0]),
 			priority=2
 		)
 
 	def get_open_orders(self, symbol: str, since=None, limit=None):
+		since = self._to_exchange_timestamp(since)
+
 		return self.exchange.fetchOpenOrders(symbol, since, limit)
+
+	def cancel_order(self, order):
+		return self.exchange.cancel_order(order['id'], order['symbol'])
 
 	 #####
 	#     # #    # #####  #####  ###### #    #  ####  # ######  ####

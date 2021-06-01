@@ -39,6 +39,9 @@ class Bot():
 	def get_open_orders(self, symbol: str, since=None, limit=None):
 		pass
 
+	def cancel_order(self, order):
+		pass
+
 	def get_ticker(self, pairs):
 		pass
 

@@ -41,8 +41,8 @@ exchanges = ['huobipro', 'upbit', 'southxchange', 'bw', 'aofex', 'hbtc', 'bitvav
 # able to do market orders
 exchanges = ['huobipro', 'upbit', 'southxchange', 'aofex', 'hbtc', 'bitvavo', 'oceanex',
 	'bittrex']
-# # testing only one
-# exchanges = ['stex']
+# testing only one
+exchanges = ['southxchange']
 ''' BLACKLIST
 OKEX - no API for new accounts
 LATOKEN - precision max 10 satoshi (X.XXXX BTC)

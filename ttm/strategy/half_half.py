@@ -13,7 +13,7 @@ TTM - ToTheMoon crypto trading bot
 """
 class HalfHalf(Strategy):
 
-	def __init__(self, pair: str, minimal_move=5.0, tick_period=60, timeframe='1m'):
+	def __init__(self, pair: str, minimal_move=5.0, tick_period=60, timeframe='1m', ext_balances={}):
 		super().__init__()
 
 		# Config
@@ -21,6 +21,7 @@ class HalfHalf(Strategy):
 		self.minimal_move = minimal_move    # percent
 		self.tick_period = tick_period      # seconds
 		self.timeframe = timeframe
+		self.ext_balances = ext_balances
 
 		# Internal
 		self.error_sent = False
@@ -32,8 +33,8 @@ class HalfHalf(Strategy):
 		ohlcv = self.bot.get_ohlcvs(self.pair, self.timeframe)[-1]
 		price = ohlcv[4]
 
-		balance1 = self.bot.get_balance(self.symbol1)
-		balance2 = self.bot.get_balance(self.symbol2)
+		balance1 = self.get_balance(self.symbol1)
+		balance2 = self.get_balance(self.symbol2)
 		value2 = balance2 / price
 
 		move = (value2 - balance1) / value2 * 100  # percent
@@ -66,6 +67,14 @@ class HalfHalf(Strategy):
 			)
 
 			self.sell(self.pair, sell_amount, price)
+
+	def get_balance(self, symbol):
+		balance = self.bot.get_balance(symbol)
+
+		if symbol in self.ext_balances:
+			balance += self.ext_balances[symbol]
+
+		return balance
 
 	def command(self, chatbot, command: str, args=[]):
 		command = command.lower()

@@ -5,7 +5,7 @@ import keyring
 #
 # Init
 #
-data_folder = 'output/keep_value'
+data_folder = 'output/btc_eur_keep_value'
 
 exchange = ccxt.binance({
 	'enableRateLimit': True,
