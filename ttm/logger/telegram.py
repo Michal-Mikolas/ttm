@@ -293,15 +293,16 @@ class Telegram(Logger):
 		#
 		# Send data
 		#
-		try:
-			self.telegram.sendMessage(
-				self.chat_id,
-				output,
-				parse_mode='html',
-				reply_markup=self.get_history_keyboard()
-			)
-		except telepot.exception.WaitTooLong:
-			pass  # network error, can't do anything about that
+		if self.chat_id:
+			try:
+				self.telegram.sendMessage(
+					self.chat_id,
+					output,
+					parse_mode='html',
+					reply_markup=self.get_history_keyboard()
+				)
+			except telepot.exception.WaitTooLong:
+				pass  # network error, can't do anything about that
 
 	def command_file(self, args):
 		# Prepare
