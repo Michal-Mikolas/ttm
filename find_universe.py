@@ -55,6 +55,8 @@ exchanges_split = [
 # # favorites (with historically found opportunities)
 # exchanges = ['huobipro', 'upbit', 'southxchange', 'aofex', 'hbtc', 'bitvavo', 'oceanex', 'bittrex']
 # exchanges = ['bitcoincom', 'AOFEX', 'bequant', 'bitpanda', 'OCEANEX', 'okex5', 'UPBIT']
+# exchanges = []
+
 # # testing only one
 # exchanges = ['southxchange']
 
