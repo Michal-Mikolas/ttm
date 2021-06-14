@@ -64,6 +64,9 @@ class Backtest(Bot):
 		# 4) Finish
 		self.log('Sold {:f} {:s}'.format(amount, currencies[0]), priority=2)
 
+	def get_open_orders(self, symbol: str, since=None, limit=None):
+		return []
+
 	def get_balance(self, symbol):
 		if symbol not in self.backtest_balances:
 			self.backtest_balances[symbol] = 0.0

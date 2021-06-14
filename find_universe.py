@@ -6,46 +6,61 @@ from pprint import pprint
 #
 # Init
 #
-data_folder = 'output/find_universe'
+split = 5
+data_folder = 'output/find_universe/%d' % split
 
-# all
-exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bibox', 'bigone', 'binance', 'binanceus',
-	'bit2c', 'bitbank', 'bitbay', 'bitcoincom', 'bitfinex', 'bitfinex2', 'bitflyer',
-	'bitforex', 'bitget', 'bithumb', 'bitkk', 'bitmart', 'bitmax', 'bitmex', 'bitpanda',
-	'bitso', 'bitstamp', 'bitstamp1', 'bittrex', 'bitvavo', 'bitz', 'bl3p', 'bleutrade',
-	'braziliex', 'btcalpha', 'btcbox', 'btcmarkets', 'btctradeua', 'btcturk', 'buda',
-	'bw', 'bybit', 'bytetrade', 'cdax', 'cex', 'chilebit', 'coinbase', 'coinbaseprime',
-	'coinbasepro', 'coincheck', 'coinegg', 'coinex', 'coinfalcon', 'coinfloor', 'coingi',
-	'coinmarketcap', 'coinmate', 'coinone', 'coinspot', 'crex24', 'currencycom', 'delta',
-	'deribit', 'digifinex', 'dsx', 'eterbase', 'exmo', 'exx', 'fcoin', 'fcoinjp',
-	'flowbtc', 'foxbit', 'ftx', 'gateio', 'gemini', 'gopax', 'hbtc', 'hitbtc', 'hollaex',
-	'huobijp', 'huobipro', 'ice3x', 'idex', 'independentreserve', 'indodax', 'itbit',
-	'kraken', 'kucoin', 'kuna', 'lakebtc', 'lbank', 'liquid', 'luno', 'lykke',
-	'mercado', 'mixcoins', 'novadax', 'oceanex', 'okcoin', 'paymium', 'phemex',
-	'poloniex', 'probit', 'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex',
-	'surbitcoin', 'therock', 'tidebit', 'tidex', 'timex', 'upbit', 'vaultoro', 'vbtc',
-	'vcc', 'wavesexchange', 'whitebit', 'xbtce', 'xena', 'yobit', 'zaif', 'zb']
-# supported by PathTraveler strategy (has required features: fetch_tickers, fetch_markets, ...)
-exchanges = ['aax', 'acx', 'aofex', 'bequant', 'bigone', 'binance', 'binanceus',
-	'bitcoincom', 'bitfinex', 'bitfinex2', 'bitget', 'bithumb', 'bitkk', 'bitmart',
-	'bitmex', 'bitpanda', 'bittrex', 'bitvavo', 'bitz', 'bleutrade', 'braziliex', 'bw',
-	'bybit', 'bytetrade', 'cdax', 'cex', 'coinex', 'coinfalcon', 'coinone', 'currencycom',
-	'delta', 'deribit', 'eterbase', 'exmo', 'exx', 'ftx', 'gateio', 'gemini', 'gopax',
-	'hbtc', 'hitbtc', 'hollaex', 'huobijp', 'huobipro', 'ice3x', 'kucoin', 'kuna',
-	'lakebtc', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'poloniex', 'qtrade',
-	'rightbtc', 'southxchange', 'stex', 'therock', 'tidebit', 'timex', 'upbit', 'vcc',
-	'whitebit', 'xena', 'zb']
-# favorites (with historically found opportunities)
-exchanges = ['huobipro', 'upbit', 'southxchange', 'bw', 'aofex', 'hbtc', 'bitvavo',
-	'whitebit', 'oceanex', 'bittrex']
-# able to do market orders
-exchanges = ['huobipro', 'upbit', 'southxchange', 'aofex', 'hbtc', 'bitvavo', 'oceanex',
-	'bittrex']
-# testing only one
-exchanges = ['southxchange']
+# # all
+# exchanges = [
+# 	'aax', 'aofex', 'ascendex', 'bequant', 'bibox', 'bigone', 'binance', 'binancecoinm', 'binanceus',
+# 	'binanceusdm', 'bit2c', 'bitbank', 'bitbay', 'bitbns', 'bitcoincom', 'bitfinex', 'bitfinex2',
+# 	'bitflyer', 'bitforex', 'bitget', 'bithumb', 'bitmart', 'bitmex', 'bitpanda', 'bitso', 'bitstamp',
+# 	'bitstamp1', 'bittrex', 'bitvavo', 'bitz', 'bl3p', 'braziliex', 'btcalpha', 'btcbox', 'btcmarkets',
+# 	'btctradeua', 'btcturk', 'buda', 'bw', 'bybit', 'bytetrade', 'cdax', 'cex', 'coinbase',
+# 	'coinbaseprime', 'coinbasepro', 'coincheck', 'coinegg', 'coinex', 'coinfalcon', 'coinfloor',
+# 	'coinmarketcap', 'coinmate', 'coinone', 'coinspot', 'crex24', 'currencycom', 'delta', 'deribit',
+# 	'digifinex', 'equos', 'exmo', 'exx', 'flowbtc', 'ftx', 'gateio', 'gemini', 'gopax', 'hbtc',
+# 	'hitbtc', 'hollaex', 'huobijp', 'huobipro', 'idex', 'independentreserve', 'indodax', 'itbit',
+# 	'kraken', 'kucoin', 'kuna', 'latoken', 'lbank', 'liquid', 'luno', 'lykke', 'mercado', 'mixcoins',
+# 	'ndax', 'novadax', 'oceanex', 'okcoin', 'okex', 'okex5', 'paymium', 'phemex', 'poloniex', 'probit',
+# 	'qtrade', 'rightbtc', 'ripio', 'southxchange', 'stex', 'therock', 'tidebit', 'tidex', 'timex',
+# 	'upbit', 'vcc', 'wavesexchange', 'whitebit', 'xena', 'yobit', 'zaif', 'zb',
+# ]
+# exchanges_split = [
+# 	exchanges[0:19],
+# 	exchanges[19:38],
+# 	exchanges[38:57],
+# 	exchanges[57:76],
+# 	exchanges[76:95],
+# 	exchanges[95:114],
+# ]
+
+# supported by PathTraveler & Universe strategy
+# (has required features: fetch_tickers, fetch_markets, market orders, ...)
+exchanges = [
+	'aax', 'aofex', 'bequant', 'binance', 'binanceus', 'bitcoincom', 'bitfinex', 'bitfinex2', 'bitget',
+	'bithumb', 'bitmart', 'bitpanda', 'bittrex', 'bitvavo', 'cdax', 'cex', 'coinex', 'coinfalcon',
+	'currencycom', 'exmo', 'exx', 'ftx', 'gopax', 'hbtc', 'hitbtc', 'hollaex', 'huobijp', 'huobipro',
+	'kucoin', 'lbank', 'liquid', 'novadax', 'oceanex', 'okcoin', 'okex', 'okex5', 'rightbtc',
+	'southxchange', 'therock', 'tidebit', 'timex', 'upbit', 'vcc',
+]
+exchanges_split = [
+	exchanges[0:7],
+	exchanges[7:14],
+	exchanges[14:21],
+	exchanges[21:28],
+	exchanges[28:35],
+	exchanges[35:],
+]
+
+# # favorites (with historically found opportunities)
+# exchanges = ['huobipro', 'upbit', 'southxchange', 'aofex', 'hbtc', 'bitvavo', 'oceanex', 'bittrex']
+# exchanges = ['bitcoincom', 'AOFEX', 'bequant', 'bitpanda', 'OCEANEX', 'okex5', 'UPBIT']
+# # testing only one
+# exchanges = ['southxchange']
+
 ''' BLACKLIST
 OKEX - no API for new accounts
-LATOKEN - precision max 10 satoshi (X.XXXX BTC)
+LATOKEN - precision max 10 satoshi (X.XXXX BTC)  TODO send my 30 USD back
 '''
 
 simulation_trade_amounts = {
@@ -78,7 +93,9 @@ storage.save('all_stats', all_stats)
 
 # Never-ending work...
 while True:
-	for exchange_name in exchanges:
+	for exchange_name in exchanges_split[split]:
+		exchange_name = exchange_name.lower()
+
 		for i in range(1):
 			try:
 				print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  ' + exchange_name)

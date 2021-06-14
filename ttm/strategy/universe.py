@@ -131,11 +131,11 @@ class Universe(Strategy):
 			#
 			# Let's realize the simulation
 			#
-			for i, step in enumerate(path_data['simulation']):
-				self.executor.execute(
-					simulation = path_data['simulation'],
-					index = i
-				)
+			# for i, step in enumerate(path_data['simulation']):
+			# 	self.executor.execute(
+			# 		simulation = path_data['simulation'],
+			# 		index = i
+			# 	)
 
 			#
 			# Log the results

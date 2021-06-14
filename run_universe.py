@@ -8,7 +8,7 @@ from pprint import pprint
 #
 data_folder = 'output/universe'
 
-exchange = ttm.exchange.latoken({
+exchange = ccxt.latoken({
     'enableRateLimit': False,
    	'apiKey': keyring.get_password('latoken', 'apiKey'),
     'secret': keyring.get_password('latoken', 'secret'),
