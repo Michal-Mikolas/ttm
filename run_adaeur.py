@@ -5,7 +5,7 @@ import keyring
 #
 # Init
 #
-data_folder = 'output/btc_eur_keep_value'
+data_folder = 'output/ada_eur_keep_value'
 
 exchange = ccxt.binance({
 	'enableRateLimit': True,
@@ -13,9 +13,9 @@ exchange = ccxt.binance({
     'secret': keyring.get_password('binance', 'secret'),
 })
 strategy = ttm.strategy.KeepValue(
-	pair='BTC/EUR',
-	initial_target_value=181.36394,  # EUR
-	minimal_move=5.0,                # percent
+	pair='ADA/EUR',
+	initial_target_value=100.0,  # EUR
+	minimal_move=7.6,            # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.9778421,
@@ -30,12 +30,12 @@ logger = ttm.logger.Multi(
 	ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 	ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 	ttm.logger.Telegram(
-		token=keyring.get_password('telegram', 'btceurToken'),        # secures the Telegram bot
+		token=keyring.get_password('telegram', 'adaeurToken'),         # secures the Telegram bot
 		password=keyring.get_password('telegram', 'chatbotPassword'),  # secures the TTM bot
 		root_folder=data_folder,
 	),
 )
-logger.set_pair('BTC/EUR')
+logger.set_pair('ADA/EUR')
 
 bot = ttm.bot.Real(exchange, strategy, storage, cache, logger)
 # bot.set_exceptions_file(data_folder + '/exceptions.log')
