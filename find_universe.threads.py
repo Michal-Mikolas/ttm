@@ -235,6 +235,7 @@ def simulate_wrapper(*args, **kwargs):
 
 
 # Never-ending work...
+i = 0
 while True:
 	for exchange_name in exchanges:
 		# Blacklist?
@@ -252,5 +253,13 @@ while True:
 		thread = threading.Thread(target=simulate, args=[exchange_name])
 		thread.start()
 
+		# Sort results
+		i += 1
+		if i % 100 == 0:
+			print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  SORTING RESULTS...')
 
-# all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['simulation_result_coef'], reverse=True)}
+			all_stats = storage_results.open()
+			all_stats = {k:all_stats[k] for k in sorted(all_stats, key=lambda k: all_stats[k]['simulation_result_coef'], reverse=True)}
+			storage_results.save(all_stats)
+
+			print(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '  SORTED...')
