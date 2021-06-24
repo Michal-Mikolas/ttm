@@ -61,7 +61,7 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 	# ADABNB:
 	# IOTABNB:
 	# FTMBNB:   1.3m-1.3m:   '2019-06-19', '2021-05-02'
-	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-05-15', '2021-01-04', {
+	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2021-02-10', '2021-06-24', {
 		'NANO': 0.0,
 		'USDT': 0.0,
 	})
