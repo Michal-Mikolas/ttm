@@ -1,4 +1,6 @@
 import ccxt
+from ccxt import InvalidOrder
+from ccxt.base.errors import InsufficientFunds
 from datetime import datetime, timedelta
 from ttm.strategy import Strategy
 import re
@@ -124,7 +126,7 @@ class KeepValue(Strategy):
 			)
 			return True
 
-		except (ccxt.InvalidOrder, TimeoutError) as e:
+		except (InvalidOrder, TimeoutError, InsufficientFunds) as e:
 			self.bot.log(
 				'Buy of {:5.5f} {:s} failed.'.format(amount, self.currency1),
 				priority=(1 if self.error_sent else 2)
@@ -160,7 +162,7 @@ class KeepValue(Strategy):
 			)
 			return True
 
-		except (ccxt.InvalidOrder, TimeoutError) as e:
+		except (InvalidOrder, TimeoutError, InsufficientFunds) as e:
 			self.bot.log(
 				'Sell of {:5.5f} {:s} failed...'.format(amount, self.currency1),
 				priority=(1 if self.error_sent else 2)
