@@ -21,7 +21,7 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 	mm = mm / 10
 
 	strategy = ttm.strategy.KeepValue(
-		pair='FTM/USDT',
+		pair='NANO/USDT',
 		initial_target_value=100,  # USD
 		minimal_move=mm,           # percent
 		tick_period=60*60,
@@ -37,13 +37,13 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 		ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 		ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 			'file': 'output/results.csv',
-			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=FTM/USDT, tick_period=60*60, timeframe=1h'.format(
+			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=NANO/USDT, tick_period=60*60, timeframe=1h'.format(
 				mm
 			),
 		}),
 		# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 	)
-	logger.set_pair('FTM/USDT')
+	logger.set_pair('NANO/USDT')
 
 	# BTCUSDT:  7.5k-7.5k:     '2018-06-01', '2020-04-24'
 	# DOGEUSDT: 3.81m-3.83m:   '2019-07-06', '2020-12-19'
@@ -55,14 +55,14 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 	# ADAUSDT:  0.0854-0.0894: '2019-04-03', '2020-09-20'
 	# BNBUSDT:  16.10-16.51:   '2020-04-30', '2020-09-06'
 	# FTMUSDT:  0.0155-0.0152: '2019-08-15', '2020-11-04'
+	# NANOUSDT: 1.70-1.71:     '2019-05-15', '2021-01-04'
+	# NANOUSDT: 4.62-4.64:     '2021-02-10', '2021-06-24'
 	#
 	# ADABNB:
 	# IOTABNB:
 	# FTMBNB:   1.3m-1.3m:   '2019-06-19', '2021-05-02'
-	#
-	# NANO???:
-	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-08-15', '2020-11-04', {
-		'FTM': 0.0,
+	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2019-05-15', '2021-01-04', {
+		'NANO': 0.0,
 		'USDT': 0.0,
 	})
 
