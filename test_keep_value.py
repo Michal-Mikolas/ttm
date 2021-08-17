@@ -17,11 +17,11 @@ except:
 # Init
 #
 exchange = ccxt.binance({'enableRateLimit': True})
-for mm in range(40, 402, 2):  # 4-30 % +0.2
+for mm in range(40, 202, 2):  # 4-20 % +0.2
 	mm = mm / 10
 
 	strategy = ttm.strategy.KeepValue(
-		pair='NANO/USDT',
+		pair='LINK/USDT',
 		initial_target_value=100,  # USD
 		minimal_move=mm,           # percent
 		tick_period=60*60,
@@ -37,13 +37,13 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 		ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 		ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 			'file': 'output/results.csv',
-			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=NANO/USDT, tick_period=60*60, timeframe=1h'.format(
+			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=LINK/USDT, tick_period=60*60, timeframe=1h'.format(
 				mm
 			),
 		}),
 		# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 	)
-	logger.set_pair('NANO/USDT')
+	logger.set_pair('LINK/USDT')
 
 	# BTCUSDT:  7.5k-7.5k:     '2018-06-01', '2020-04-24'
 	# DOGEUSDT: 3.81m-3.83m:   '2019-07-06', '2020-12-19'
@@ -57,12 +57,15 @@ for mm in range(40, 402, 2):  # 4-30 % +0.2
 	# FTMUSDT:  0.0155-0.0152: '2019-08-15', '2020-11-04'
 	# NANOUSDT: 1.70-1.71:     '2019-05-15', '2021-01-04'
 	# NANOUSDT: 4.62-4.64:     '2021-02-10', '2021-06-24'
+	# LINKUSDT: 14.09-13.74:   '2020-11-21', '2021-07-21'
+	# NEOUSDT:  28.2-27.4:     '2018-06-18', '2021-02-09'
+	# IOTAUSDT: 0.616-4.625:   '2018-08-09', '2021-06-20'
 	#
 	# ADABNB:
 	# IOTABNB:
 	# FTMBNB:   1.3m-1.3m:   '2019-06-19', '2021-05-02'
-	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2021-02-10', '2021-06-24', {
-		'NANO': 0.0,
+	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2020-11-21', '2021-07-21', {
+		'LINK': 0.0,
 		'USDT': 0.0,
 	})
 
