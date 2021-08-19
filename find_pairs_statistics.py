@@ -15,7 +15,7 @@ data_folder = 'output/find_pairs_statistics'
 
 storage = ttm.storage.JSONFile("%s/storage.json" % (data_folder))
 
-exchange = ccxt.binance()
+exchange = ccxt.okex()
 
 #
 # Get Data

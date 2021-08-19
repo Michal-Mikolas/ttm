@@ -14,8 +14,8 @@ exchange = ccxt.binance({
 })
 strategy = ttm.strategy.KeepValue(
 	pair='LINK/EUR',
-	initial_target_value=128.0,  # EUR
-	minimal_move=7.6,            # percent
+	initial_target_value=120.0,  # EUR
+	minimal_move=11.8,           # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.9778421,
