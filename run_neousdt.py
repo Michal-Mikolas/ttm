@@ -14,8 +14,8 @@ exchange = ccxt.binance({
 })
 strategy = ttm.strategy.KeepValue(
 	pair='NEO/USDT',
-	initial_target_value=114.0,  # USDT
-	minimal_move=10.6,           # percent
+	initial_target_value=100.0,  # USDT
+	minimal_move=11.6,           # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.9778421,
