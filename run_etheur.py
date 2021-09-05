@@ -7,15 +7,15 @@ import keyring
 #
 data_folder = 'output/eth_eur_keep_value'
 
-exchange = ccxt.binance({
+exchange = ttm.exchange.BinanceFix({
 	'enableRateLimit': True,
 	'apiKey': keyring.get_password('binance', 'apiKey'),
     'secret': keyring.get_password('binance', 'secret'),
 })
 strategy = ttm.strategy.KeepValue(
 	pair='ETH/EUR',
-	initial_target_value=157.5,  # EUR
-	minimal_move=9.6,            # percent
+	initial_target_value=163.85969,  # EUR
+	minimal_move=9.6,                # percent
 	tick_period=60,
 	timeframe='5m',
 	sell_modifier=0.9778421,

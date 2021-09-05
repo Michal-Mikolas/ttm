@@ -11,11 +11,10 @@ class BinanceFix(ccxt.binance):
 
 	def get_step_size(self, pair):
 		if pair not in self.cache['get_step_size']:
-			ticker = self.fetch_ticker(pair)
-			filters = ticker['market']['info']['filters']
-			filter = [v for v in filters if v['filterType'] == 'LOT_SIZE'][0]
-
-			self.cache['get_step_size'][pair] = filter['stepSize']
+			markets = self.fetch_markets()
+			for market in markets:
+				filter = [v for v in market['info']['filters'] if v['filterType'] == 'LOT_SIZE'][0]
+				self.cache['get_step_size'][market['symbol']] = float(filter['stepSize'])
 
 		return self.cache['get_step_size'][pair]
 
@@ -23,8 +22,6 @@ class BinanceFix(ccxt.binance):
 		step_size = self.get_step_size(symbol)
 
 		mod = amount % step_size
-		print('amount: %f' % amount)  ###
-		print('step_size: %f' % step_size)  ###
 		if mod != 0.0:
 			# Round amount to step_size
 			r = mod / step_size
@@ -32,7 +29,5 @@ class BinanceFix(ccxt.binance):
 				amount = amount - mod
 			else:
 				amount = amount - mod + step_size
-			print(' -> ')  ###
-			print('amount: %f' % amount)  ###
 
 		super().create_order(symbol, type, side, amount, price, params)

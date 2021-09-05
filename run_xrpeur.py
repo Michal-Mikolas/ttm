@@ -7,7 +7,7 @@ import keyring
 #
 data_folder = 'output/xrp_eur_keep_value'
 
-exchange = ccxt.binance({
+exchange = ttm.exchange.BinanceFix({
 	'enableRateLimit': True,
 	'apiKey': keyring.get_password('binance', 'apiKey'),
     'secret': keyring.get_password('binance', 'secret'),
