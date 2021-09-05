@@ -14,7 +14,7 @@ exchange = ccxt.binance({
 })
 strategy = ttm.strategy.KeepValue(
 	pair='FTM/USDT',
-	initial_target_value=126.0,  # USDT
+	initial_target_value=250.0,  # USDT
 	minimal_move=8.2,            # percent
 	tick_period=60,
 	timeframe='5m',

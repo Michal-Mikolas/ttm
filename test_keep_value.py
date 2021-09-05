@@ -21,7 +21,7 @@ for mm in range(40, 202, 2):  # 4-20 % +0.2
 	mm = mm / 10
 
 	strategy = ttm.strategy.KeepValue(
-		pair='LINK/USDT',
+		pair='IOTA/USDT',
 		initial_target_value=100,  # USD
 		minimal_move=mm,           # percent
 		tick_period=60*60,
@@ -37,13 +37,13 @@ for mm in range(40, 202, 2):  # 4-20 % +0.2
 		ttm.logger.CSVFile(data_folder + '/log.csv', min_priority=1),
 		ttm.logger.Statistics(storage, data_folder, min_priority=0, export_results={
 			'file': 'output/results.csv',
-			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=LINK/USDT, tick_period=60*60, timeframe=1h'.format(
+			'note': 'minimal_move={:2.1f}, sell_modifier=1.0, buy_modifier=1.0, initial_target_value=0, pair=IOTA/USDT, tick_period=60*60, timeframe=1h'.format(
 				mm
 			),
 		}),
 		# ttm.logger.Gmail(to='nanuqcz@gmail.com', login='nanuqcz@gmail.com', min_priority=2),  # register gmail password to keyring first: https://github.com/kootenpv/yagmail#username-and-password
 	)
-	logger.set_pair('LINK/USDT')
+	logger.set_pair('IOTA/USDT')
 
 	# BTCUSDT:  7.5k-7.5k:     '2018-06-01', '2020-04-24'
 	# DOGEUSDT: 3.81m-3.83m:   '2019-07-06', '2020-12-19'
@@ -64,8 +64,8 @@ for mm in range(40, 202, 2):  # 4-20 % +0.2
 	# ADABNB:
 	# IOTABNB:
 	# FTMBNB:   1.3m-1.3m:   '2019-06-19', '2021-05-02'
-	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2020-11-21', '2021-07-21', {
-		'LINK': 0.0,
+	bot = ttm.bot.Backtest(exchange, strategy, storage, cache, logger, '2018-08-09', '2021-06-20', {
+		'IOTA': 0.0,
 		'USDT': 0.0,
 	})
 
