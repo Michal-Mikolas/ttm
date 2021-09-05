@@ -1,16 +1,30 @@
 import ccxt
 
 class BinanceFix(ccxt.binance):
+
+	def __init__(self, options):
+		super().__init__(options)
+
+		self.cache = {
+			'get_step_size': {},
+		}
+
 	def get_step_size(self, pair):
-		filters = pairs['BTC/USDT']['market']['info']['filters']
-		filter = [v for v in filters if v['filterType'] == 'LOT_SIZE'][0]
-		step_size = filter['stepSize']
-		return step_size
+		if pair not in self.cache['get_step_size']:
+			ticker = self.fetch_ticker(pair)
+			filters = ticker['market']['info']['filters']
+			filter = [v for v in filters if v['filterType'] == 'LOT_SIZE'][0]
+
+			self.cache['get_step_size'][pair] = filter['stepSize']
+
+		return self.cache['get_step_size'][pair]
 
 	def create_order(self, symbol, type, side, amount, price=None, params={}):
 		step_size = self.get_step_size(symbol)
 
 		mod = amount % step_size
+		print('amount: %f' % amount)  ###
+		print('step_size: %f' % step_size)  ###
 		if mod != 0.0:
 			# Round amount to step_size
 			r = mod / step_size
@@ -18,5 +32,7 @@ class BinanceFix(ccxt.binance):
 				amount = amount - mod
 			else:
 				amount = amount - mod + step_size
+			print(' -> ')  ###
+			print('amount: %f' % amount)  ###
 
 		super().create_order(symbol, type, side, amount, price, params)

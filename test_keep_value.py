@@ -16,7 +16,7 @@ except:
 #
 # Init
 #
-exchange = ccxt.binance({'enableRateLimit': True})
+exchange = ttm.exchange.BinanceFix({'enableRateLimit': True})
 for mm in range(40, 202, 2):  # 4-20 % +0.2
 	mm = mm / 10
 
