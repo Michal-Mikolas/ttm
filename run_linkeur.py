@@ -18,8 +18,8 @@ strategy = ttm.strategy.KeepValue(
 	minimal_move=11.8,               # percent
 	tick_period=60,
 	timeframe='5m',
-	sell_modifier=0.9778421,
-	buy_modifier=1.0221579,
+	sell_modifier=0.9556842,         # 0.9778421
+	buy_modifier=1.0443158,          # 1.0221579
 )
 storage = ttm.storage.JSONFile(data_folder + '/storage.json')  # storage for strategy data
 cache = ttm.storage.JSONFile('cache.json')                     # storage for performance optimalisation
