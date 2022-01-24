@@ -36,8 +36,12 @@ class Telegram(Logger):
 				parse_mode='markdown',
 				reply_markup=self.get_history_keyboard()
 			)
+
 		except telepot.exception.WaitTooLong:
 			pass  # network error, can't do anything about that
+
+		except Exception as e:
+			print(f'! {type(e).__name__}: {str(e)}')  # TODO fix 'blocked by client' error
 
 	def on_message(self, msg):
 		#

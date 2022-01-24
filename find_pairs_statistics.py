@@ -15,7 +15,7 @@ data_folder = 'output/find_pairs_statistics'
 
 storage = ttm.storage.JSONFile("%s/storage.json" % (data_folder))
 
-exchange = ccxt.okex()
+exchange = ccxt.binance()
 
 #
 # Get Data
@@ -24,6 +24,8 @@ pairs = ttm.Tools.get_pairs(exchange) #; print('# PAIRS:') ; pprint(pairs) ; pri
 stats = {}
 for pair in pairs:
 	if ('USD' not in pair) and ('EUR' not in pair):
+		continue
+	if ('UP/' in pair) or ('DOWN/' in pair):
 		continue
 
 	print(pair)
